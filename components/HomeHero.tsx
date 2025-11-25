@@ -9,7 +9,7 @@ export default function HomeHero() {
   return (
     <section className="container py-20 md:py-32">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        <div>
+        <div className="order-2 lg:order-1">
           <div className="mb-6">
             <Image
               src="/images/aussie_bitcoin_merchants.png"
@@ -50,7 +50,7 @@ export default function HomeHero() {
             </div>
           </div>
         </div>
-        <div className="relative">
+        <div className="relative order-1 lg:order-2">
           <div className="relative rounded-lg overflow-hidden h-64 md:h-96 shadow-xl">
             <Image
               src="/images/blake-wisz-tE6th1h6Bfk-unsplash.jpg"
