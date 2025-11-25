@@ -1,14 +1,23 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
 
 export async function middleware(request: NextRequest) {
   // Check if the request is for an admin route
   if (request.nextUrl.pathname.startsWith("/admin")) {
-    const session = await auth();
+    // Skip auth check for login page
+    if (request.nextUrl.pathname.startsWith("/admin/login")) {
+      return NextResponse.next();
+    }
     
-    // If no session and not already on login page, redirect to login
-    if (!session && !request.nextUrl.pathname.startsWith("/admin/login")) {
+    // Check for NextAuth session cookie (lightweight check)
+    // NextAuth stores the session in a cookie named "authjs.session-token" or "next-auth.session-token"
+    const sessionToken = request.cookies.get("authjs.session-token") || 
+                         request.cookies.get("next-auth.session-token") ||
+                         request.cookies.get("__Secure-authjs.session-token") ||
+                         request.cookies.get("__Secure-next-auth.session-token");
+    
+    // If no session token, redirect to login
+    if (!sessionToken) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
   }
