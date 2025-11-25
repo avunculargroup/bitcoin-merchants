@@ -1,6 +1,6 @@
-# BTCMap Onboarding Portal
+# Aussie Bitcoin Merchants Onboarding Portal
 
-A self-service onboarding portal that allows Australian businesses to register themselves as accepting Bitcoin and have that information published on BTC Map (which uses OpenStreetMap data).
+A privately managed self-service onboarding portal that allows Australian businesses to register themselves as accepting Bitcoin and have that information published on BTC Map (which uses OpenStreetMap data). This project supports the BTCMap ecosystem by facilitating business submissions.
 
 ## Features
 
@@ -147,7 +147,7 @@ The portal uses a dedicated OSM import account to create/update nodes. Each busi
 
 ## License
 
-This project is part of the BTCMap ecosystem. Business data is published to OpenStreetMap under the ODbL license.
+This is a privately managed project that supports the BTCMap ecosystem. Business data is published to OpenStreetMap under the ODbL license.
 
 ## Support
 
