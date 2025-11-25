@@ -21,7 +21,7 @@ const config: Config = {
       colors: {
         // New color palette
         primary: {
-          DEFAULT: "#051D66", // Imperial blue - Primary buttons, main headings, brand elements
+          DEFAULT: "#0A2E8A", // Imperial blue - Primary buttons, main headings, brand elements
           dark: "#011D5F", // Deep navy - Hover states, darker variants
           light: "#505984", // Dusty grape - Lighter variants, secondary text
         },
