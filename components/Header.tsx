@@ -32,7 +32,7 @@ export default function Header() {
           </nav>
         </div>
         <Button asChild>
-          <Link href="/submit">Register business</Link>
+          <Link href="/map">Register business</Link>
         </Button>
       </div>
     </header>

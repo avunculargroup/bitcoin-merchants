@@ -15,7 +15,7 @@ export default function GetOnMap() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Button size="lg" asChild>
-              <Link href="/submit">Register Your Business</Link>
+              <Link href="/map">Register Your Business</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href="/map">Learn More</Link>
