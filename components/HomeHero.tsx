@@ -3,14 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Shield, MapPin } from "lucide-react";
 
 export default function HomeHero() {
   return (
     <section className="container py-20 md:py-32">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div className="order-2 lg:order-1">
-          <div className="mb-6">
+          <div className="mb-6 hidden md:block">
             <Image
               src="/images/aussie_bitcoin_merchants.png"
               alt="Aussie Bitcoin Merchants"
@@ -38,16 +37,6 @@ export default function HomeHero() {
             <Button size="lg" variant="outline" asChild>
               <Link href="/map#how-it-works">Learn More</Link>
             </Button>
-          </div>
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2 text-sm text-neutral-dark">
-              <Shield className="h-5 w-5 text-primary" />
-              <span>HTTPS Secure</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-neutral-dark">
-              <MapPin className="h-5 w-5 text-secondary" />
-              <span>100% Australian Owned</span>
-            </div>
           </div>
         </div>
         <div className="relative order-1 lg:order-2">
