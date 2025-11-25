@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Shield, MapPin, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 
 export default function Hero() {
   return (
@@ -20,14 +20,6 @@ export default function Hero() {
             <Link href="/submit">Add Your Business</Link>
           </Button>
           <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2 text-sm text-neutral-dark">
-              <Shield className="h-5 w-5 text-primary" />
-              <span>HTTPS Secure</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-neutral-dark">
-              <MapPin className="h-5 w-5 text-secondary" />
-              <span>100% Australian Owned</span>
-            </div>
             <div className="flex items-center gap-2 text-sm text-neutral-dark">
               <CheckCircle className="h-5 w-5 text-secondary" />
               <span>Built on open data (OpenStreetMap)</span>
