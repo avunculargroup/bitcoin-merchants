@@ -16,7 +16,7 @@ async function getAccessToken(): Promise<string> {
   // If we already have a token cached, use it
   // Note: OSM access tokens typically don't expire, so we can cache them indefinitely
   if (accessToken) {
-    return accessToken;
+    return accessToken; // TypeScript knows accessToken is string here due to the if check
   }
 
   // OSM credentials check
@@ -72,6 +72,10 @@ async function getAccessToken(): Promise<string> {
   // OSM access tokens typically don't expire, so we don't need to track expiry
   // But if expires_in is provided, we can use it
   // tokenExpiry is not needed if tokens don't expire
+
+  if (!accessToken) {
+    throw new Error("Failed to obtain OSM access token");
+  }
 
   return accessToken;
 }

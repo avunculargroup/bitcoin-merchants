@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Verify ALTCHA solution using altcha-lib
     try {
-      const verified = verifySolution(token, env.altchaSecretKey);
+      const verified = await verifySolution(token, env.altchaSecretKey);
       
       if (verified) {
         return NextResponse.json({ valid: true });

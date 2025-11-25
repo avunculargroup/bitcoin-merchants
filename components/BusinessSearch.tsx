@@ -4,6 +4,32 @@ import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 
+// Type alias for PlacesLibrary to avoid namespace resolution issues
+type PlaceInstance = {
+  id: string;
+  displayName?: { text: string };
+  formattedAddress?: string;
+  addressComponents?: Array<{
+    longName: string;
+    shortName: string;
+    types: string[];
+  }>;
+  fetchFields(request: { fields: string[] }): Promise<void>;
+};
+
+type PlaceConstructor = {
+  new (options: { id: string }): PlaceInstance;
+  searchByText(request: {
+    textQuery: string;
+    maxResultCount?: number;
+    fields?: string[];
+  }): Promise<{ places: any[] }>;
+};
+
+type PlacesLibrary = {
+  Place: PlaceConstructor;
+};
+
 interface PlacePrediction {
   id: string;
   displayName: { text: string };
@@ -28,7 +54,7 @@ export default function BusinessSearch({ onPlaceSelect }: BusinessSearchProps) {
   const [suggestions, setSuggestions] = useState<PlacePrediction[]>([]);
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const PlaceClass = useRef<typeof google.maps.places.Place | null>(null);
+  const PlaceClass = useRef<PlaceConstructor | null>(null);
   const isGoogleMapsReady = useRef(false);
 
   useEffect(() => {
@@ -45,7 +71,8 @@ export default function BusinessSearch({ onPlaceSelect }: BusinessSearchProps) {
         }
         
         // Load the Places library dynamically using the new importLibrary method
-        const { Place } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
+        const placesLibrary = await google.maps.importLibrary("places") as PlacesLibrary;
+        const { Place } = placesLibrary;
         PlaceClass.current = Place;
         isGoogleMapsReady.current = true;
         console.log("Places library initialized successfully");
@@ -107,7 +134,11 @@ export default function BusinessSearch({ onPlaceSelect }: BusinessSearchProps) {
       try {
         // Use the new Place.searchByText() method with Promises
         // The new API requires fields to be specified as an array
-        const request: google.maps.places.SearchByTextRequest = {
+        const request: {
+          textQuery: string;
+          maxResultCount?: number;
+          fields?: string[];
+        } = {
           textQuery: `${query} Australia`, // Add Australia to query for country restriction
           maxResultCount: 5, // Limit results
           fields: ["id", "displayName"], // Required: specify which fields to return
@@ -180,7 +211,9 @@ export default function BusinessSearch({ onPlaceSelect }: BusinessSearchProps) {
       // Use the new Place.fetchFields() method with Promises
       const place = new PlaceClass.current({ id: placeId });
       
-      const request: google.maps.places.FetchFieldsRequest = {
+      const request: {
+        fields: string[];
+      } = {
         fields: ["displayName", "formattedAddress", "addressComponents"],
       };
 
