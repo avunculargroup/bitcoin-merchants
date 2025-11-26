@@ -61,14 +61,6 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-            <Link
-              href="https://openstreetmap.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-neutral-dark hover:text-primary inline-block mt-3"
-            >
-              OpenStreetMap
-            </Link>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
