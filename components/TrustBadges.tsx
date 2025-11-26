@@ -36,9 +36,9 @@ export default function TrustBadges() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent text-white mb-4">
             <Globe className="h-8 w-8" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Australian Trust Marks</h3>
+          <h3 className="text-xl font-semibold mb-2">Australian team</h3>
           <p className="text-neutral-dark mb-4">
-            We're 100% Australian owned, ensuring credibility and local ownership.
+            We're 100% Australian owned, ensuring credibility and local knowledge.
           </p>
           <div className="flex justify-center gap-4 mt-4">
             <span className="px-3 py-1 bg-primary text-white text-sm rounded">100% Australian Owned</span>
