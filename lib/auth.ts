@@ -14,36 +14,59 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            console.warn("Auth: Missing credentials");
+            return null;
+          }
+
+          const email = typeof credentials.email === 'string' ? credentials.email : '';
+          const password = typeof credentials.password === 'string' ? credentials.password : '';
+
+          if (!email || !password) {
+            console.warn("Auth: Invalid credential types");
+            return null;
+          }
+
+          let user;
+          try {
+            user = await prisma.adminUser.findUnique({
+              where: { email },
+            });
+          } catch (dbError: any) {
+            // Database connection error
+            console.error("Auth: Database error:", dbError?.message || dbError);
+            // Throw a more specific error that NextAuth can handle
+            throw new Error("Database connection failed");
+          }
+
+          if (!user) {
+            console.warn(`Auth: User not found for email: ${email}`);
+            return null;
+          }
+
+          const isValid = await bcrypt.compare(password, user.passwordHash);
+
+          if (!isValid) {
+            console.warn(`Auth: Invalid password for email: ${email}`);
+            return null;
+          }
+
+          return {
+            id: user.id.toString(),
+            email: user.email,
+            role: user.role,
+          };
+        } catch (error: any) {
+          // Log the error for debugging
+          console.error("Auth: Authorize error:", error?.message || error);
+          // Re-throw database errors so NextAuth can handle them properly
+          if (error?.message?.includes("Database connection failed")) {
+            throw error;
+          }
+          // For other errors, return null to indicate authentication failure
           return null;
         }
-
-        const email = typeof credentials.email === 'string' ? credentials.email : '';
-        const password = typeof credentials.password === 'string' ? credentials.password : '';
-
-        if (!email || !password) {
-          return null;
-        }
-
-        const user = await prisma.adminUser.findUnique({
-          where: { email },
-        });
-
-        if (!user) {
-          return null;
-        }
-
-        const isValid = await bcrypt.compare(password, user.passwordHash);
-
-        if (!isValid) {
-          return null;
-        }
-
-        return {
-          id: user.id.toString(),
-          email: user.email,
-          role: user.role,
-        };
       },
     }),
   ],
