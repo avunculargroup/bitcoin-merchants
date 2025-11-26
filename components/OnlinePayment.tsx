@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { Globe, Lock, DollarSign } from "lucide-react";
+import { Globe } from "lucide-react";
 
 interface PaymentOption {
   name: string;
   description: string;
   features: string[];
+  websiteUrl?: string;
   icon?: React.ComponentType<{ className?: string }>;
   logoPath?: string;
 }
@@ -18,6 +19,7 @@ export default function OnlinePayment() {
       description:
         "A free, open‑source, non‑custodial payment processor that allows you to accept bitcoin directly into your own wallet. It can be integrated into websites, WooCommerce stores, and subscription platforms.",
       features: ["Free", "Open-source", "Non-custodial", "Self-hosted"],
+      websiteUrl: "https://btcpayserver.org/",
       logoPath: "/images/btcpay-logo.svg",
     },
     {
@@ -25,6 +27,7 @@ export default function OnlinePayment() {
       description:
         "A payment platform where businesses can accept or send Bitcoin payments instantly via the Lightning Network or on-chain, with minimal fees and no chargebacks. It offers secure hosted checkout pages, payment buttons, ecommerce plug-ins and APIs, allowing merchants to accept Bitcoin globally and convert it to local currency if desired.",
       features: ["Lightning payments", "On-chain", "Hosted checkout", "Fiat conversion"],
+      websiteUrl: "https://opennode.com/",
       logoPath: "/images/opennode-logo.svg",
     },
   ];
@@ -76,6 +79,19 @@ export default function OnlinePayment() {
                   </span>
                 ))}
               </div>
+              {option.websiteUrl && (
+                <div className="mt-4">
+                  <a
+                    href={option.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors text-[#7C2F00] bg-[#FFE4CC] hover:bg-[#FFD4A8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF8A00]"
+                  >
+                    <Globe className="h-3 w-3" />
+                    Visit website
+                  </a>
+                </div>
+              )}
             </div>
           );
         })}
