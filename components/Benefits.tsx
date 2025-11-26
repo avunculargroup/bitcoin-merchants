@@ -2,7 +2,11 @@
 
 import { Users, Clock, Globe } from "lucide-react";
 
-export default function Benefits() {
+type BenefitsProps = {
+  showTestimonials?: boolean;
+};
+
+export default function Benefits({ showTestimonials = true }: BenefitsProps) {
   const benefits = [
     {
       icon: Users,
@@ -40,21 +44,23 @@ export default function Benefits() {
           );
         })}
       </div>
-      <div className="bg-neutral-light rounded-lg p-8">
-        <h3 className="text-2xl font-semibold mb-6 text-center">What Our Users Say</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg">
-            <p className="text-neutral-dark mb-4">&quot;Listing our business brought us new customers we never would have reached otherwise.&quot;</p>
-            <p className="font-semibold">— Sarah Johnson</p>
-            <p className="text-sm text-neutral-dark">Cafe Owner, Melbourne</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg">
-            <p className="text-neutral-dark mb-4">&quot;The process was so simple and free. Highly recommend!&quot;</p>
-            <p className="font-semibold">— Michael Chen</p>
-            <p className="text-sm text-neutral-dark">Retail Store, Sydney</p>
+      {showTestimonials && (
+        <div className="bg-neutral-light rounded-lg p-8">
+          <h3 className="text-2xl font-semibold mb-6 text-center">What Our Users Say</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg">
+              <p className="text-neutral-dark mb-4">&quot;Listing our business brought us new customers we never would have reached otherwise.&quot;</p>
+              <p className="font-semibold">— Sarah Johnson</p>
+              <p className="text-sm text-neutral-dark">Cafe Owner, Melbourne</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg">
+              <p className="text-neutral-dark mb-4">&quot;The process was so simple and free. Highly recommend!&quot;</p>
+              <p className="font-semibold">— Michael Chen</p>
+              <p className="text-sm text-neutral-dark">Retail Store, Sydney</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
