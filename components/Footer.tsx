@@ -80,10 +80,16 @@ export default function Footer() {
         <div className="mt-8 pt-8 border-t text-center text-sm text-neutral-dark">
           <p>Built on open data (OpenStreetMap)</p>
           <p className="mt-1 text-xs">Geocoding powered by OpenStreetMap Nominatim</p>
-        <p className="mt-2 text-xs">
-          Website managed by Avuncular Group Pty Ltd, an Aussie company dedicated to supporting
-          bitcoin education.
-        </p>
+          <p className="mt-1 text-xs">
+            Supporting the{" "}
+            <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="underline">
+              BTCMap project
+            </Link>
+          </p>
+          <p className="mt-2 text-xs">
+            Website managed by Avuncular Group Pty Ltd, an Aussie company dedicated to supporting
+            bitcoin education.
+          </p>
         </div>
       </div>
     </footer>
