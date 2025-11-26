@@ -396,6 +396,15 @@ export default function SubmitPage() {
   return (
     <div className="container py-20">
       <div className="max-w-3xl mx-auto">
+        <div className="mb-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+          <p className="text-sm md:text-base">
+            This form is for businesses that accept customers in person. If you want to register details for online or private appointments,{" "}
+            <a href="/contact" className="font-semibold text-primary underline">
+              email us
+            </a>
+            .
+          </p>
+        </div>
         <h1 className="text-4xl font-bold mb-8">Add Your Business</h1>
 
         <form 
