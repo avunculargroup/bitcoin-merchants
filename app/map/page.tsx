@@ -9,7 +9,7 @@ export default function MapPage() {
     <main>
       <Hero />
       <StepByStep />
-      <Benefits />
+      <Benefits showTestimonials={false} />
       <TrustBadges />
       <FAQ />
     </main>
