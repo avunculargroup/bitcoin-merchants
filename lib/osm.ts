@@ -6,6 +6,26 @@ interface OSMNode {
   tags: Record<string, string>;
 }
 
+interface OSMWay {
+  tags: Record<string, string>;
+  nodes: number[];
+}
+
+interface OSMFetchedNode {
+  id: number;
+  version: number;
+  lat: number;
+  lon: number;
+  tags: Record<string, string>;
+}
+
+interface OSMFetchedWay {
+  id: number;
+  version: number;
+  tags: Record<string, string>;
+  nodes: number[];
+}
+
 interface OSMChangeset {
   id: number;
 }
@@ -184,6 +204,45 @@ ${tags}
   }
 }
 
+/**
+ * Update a way in OSM (tags only, nodes/geometry unchanged)
+ */
+export async function updateWay(wayId: number, way: OSMWay, version: number, changesetId: number): Promise<void> {
+  const token = await getAccessToken();
+
+  const tags = Object.entries(way.tags)
+    .map(([k, v]) => `    <tag k="${escapeXml(k)}" v="${escapeXml(v)}"/>`)
+    .join("\n");
+
+  // Include existing node references (geometry unchanged)
+  const nodeRefs = way.nodes.map(nodeId => `    <nd ref="${nodeId}"/>`).join("\n");
+
+  const wayXml = `<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="Aussie-Bitcoin-Merchants">
+  <way id="${wayId}" version="${version}" changeset="${changesetId}">
+${nodeRefs}
+${tags}
+  </way>
+</osm>`;
+
+  const response = await fetch(`https://api.openstreetmap.org/api/0.6/way/${wayId}`, {
+    method: "PUT",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/xml",
+    },
+    body: wayXml,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    if (response.status === 409) {
+      throw new Error(`Version conflict: Way ${wayId} was modified by another user`);
+    }
+    throw new Error(`Failed to update way: ${response.status} ${text}`);
+  }
+}
+
 export async function closeChangeset(changesetId: number): Promise<void> {
   const token = await getAccessToken();
 
@@ -198,5 +257,143 @@ export async function closeChangeset(changesetId: number): Promise<void> {
     const text = await response.text();
     throw new Error(`Failed to close changeset: ${response.status} ${text}`);
   }
+}
+
+/**
+ * Fetch a node from OSM API
+ * Returns the node data including version, coordinates, and tags
+ */
+export async function fetchNode(nodeId: number): Promise<OSMFetchedNode> {
+  const token = await getAccessToken();
+
+  const response = await fetch(`https://api.openstreetmap.org/api/0.6/node/${nodeId}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    if (response.status === 410) {
+      throw new Error(`Node ${nodeId} has been deleted`);
+    }
+    throw new Error(`Failed to fetch node: ${response.status} ${text}`);
+  }
+
+  const xmlText = await response.text();
+  
+  // Parse XML to extract node data - attributes can be in any order
+  const idMatch = xmlText.match(/<node[^>]*\s+id="(\d+)"/);
+  const versionMatch = xmlText.match(/<node[^>]*\s+version="(\d+)"/);
+  const latMatch = xmlText.match(/<node[^>]*\s+lat="([\d.-]+)"/);
+  const lonMatch = xmlText.match(/<node[^>]*\s+lon="([\d.-]+)"/);
+  
+  if (!idMatch || !versionMatch || !latMatch || !lonMatch) {
+    throw new Error(`Failed to parse node XML: ${xmlText}`);
+  }
+
+  const id = parseInt(idMatch[1], 10);
+  const version = parseInt(versionMatch[1], 10);
+  const lat = parseFloat(latMatch[1]);
+  const lon = parseFloat(lonMatch[1]);
+
+  // Extract tags
+  const tags: Record<string, string> = {};
+  const tagMatches = xmlText.matchAll(/<tag k="([^"]+)" v="([^"]+)"/g);
+  for (const match of tagMatches) {
+    // Unescape XML entities
+    const key = match[1]
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'");
+    const value = match[2]
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'");
+    tags[key] = value;
+  }
+
+  return {
+    id,
+    version,
+    lat,
+    lon,
+    tags,
+  };
+}
+
+/**
+ * Fetch a way from OSM API
+ * Returns the way data including version, tags, and node references
+ */
+export async function fetchWay(wayId: number): Promise<OSMFetchedWay> {
+  const token = await getAccessToken();
+
+  const response = await fetch(`https://api.openstreetmap.org/api/0.6/way/${wayId}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    if (response.status === 410) {
+      throw new Error(`Way ${wayId} has been deleted`);
+    }
+    throw new Error(`Failed to fetch way: ${response.status} ${text}`);
+  }
+
+  const xmlText = await response.text();
+  
+  // Parse XML to extract way data - attributes can be in any order
+  const idMatch = xmlText.match(/<way[^>]*\s+id="(\d+)"/);
+  const versionMatch = xmlText.match(/<way[^>]*\s+version="(\d+)"/);
+  
+  if (!idMatch || !versionMatch) {
+    throw new Error(`Failed to parse way XML: ${xmlText}`);
+  }
+
+  const id = parseInt(idMatch[1], 10);
+  const version = parseInt(versionMatch[1], 10);
+
+  // Extract node references
+  const nodes: number[] = [];
+  const nodeMatches = xmlText.matchAll(/<nd ref="(\d+)"/g);
+  for (const match of nodeMatches) {
+    nodes.push(parseInt(match[1], 10));
+  }
+
+  // Extract tags
+  const tags: Record<string, string> = {};
+  const tagMatches = xmlText.matchAll(/<tag k="([^"]+)" v="([^"]+)"/g);
+  for (const match of tagMatches) {
+    // Unescape XML entities
+    const key = match[1]
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'");
+    const value = match[2]
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'");
+    tags[key] = value;
+  }
+
+  return {
+    id,
+    version,
+    tags,
+    nodes,
+  };
 }
 

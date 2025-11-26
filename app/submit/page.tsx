@@ -371,7 +371,7 @@ export default function SubmitPage() {
           <p className="text-lg mb-6">{submitSuccess.message}</p>
           {submitSuccess.osmNodeUrl && (
             <div className="bg-neutral-light p-6 rounded-lg mb-6">
-              <p className="mb-2">Your business has been added to OpenStreetMap:</p>
+              <p className="mb-2">Your business has been added/updated on OpenStreetMap:</p>
               <a
                 href={submitSuccess.osmNodeUrl}
                 target="_blank"
