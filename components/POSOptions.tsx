@@ -107,7 +107,23 @@ export default function POSOptions() {
       name: "Manna",
       description:
         "Manna Bitcoin provides tools for merchants to accept bitcoin quickly and securely.",
-      platforms: [{ label: "Web", type: "Web" }],
+      platforms: [
+        {
+          label: "iOS",
+          type: "iOS",
+          url: "https://apps.apple.com/us/app/manna-bitcoin-wallet/id6745337602",
+        },
+        {
+          label: "Android",
+          type: "Android",
+          url: "https://play.google.com/store/apps/details?id=com.lightning.manna&hl=en_AU",
+        },
+        {
+          label: "Web",
+          type: "Web",
+          url: "https://mannabitcoin.com/",
+        },
+      ],
       imagePath: "/images/manna-logo.png",
     },
   ];
