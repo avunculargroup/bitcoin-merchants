@@ -20,6 +20,15 @@ export async function loginAction(prevState: any, formData: FormData) {
 
     redirect("/admin");
   } catch (error: any) {
+    // Next.js redirect() throws a special error that should be re-thrown
+    // Check for redirect errors by looking for the digest or type
+    if (error?.digest?.startsWith('NEXT_REDIRECT') || 
+        error?.digest === 'NEXT_REDIRECT' ||
+        error?.message?.includes('NEXT_REDIRECT') ||
+        error?.code === 'NEXT_REDIRECT') {
+      throw error;
+    }
+    
     if (error.type === "CredentialsSignin") {
       return { error: "Invalid email or password" };
     }
