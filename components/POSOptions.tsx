@@ -3,10 +3,18 @@
 import Image from "next/image";
 import { Smartphone, Globe } from "lucide-react";
 
+type PlatformType = "Android" | "iOS" | "Web";
+
+interface PlatformLink {
+  label: string;
+  type: PlatformType;
+  url?: string;
+}
+
 interface POSOption {
   name: string;
   description: string;
-  platforms: string[];
+  platforms: PlatformLink[];
   link?: string;
   imagePath?: string;
 }
@@ -17,35 +25,105 @@ export default function POSOptions() {
       name: "Wallet of Satoshi",
       description:
         "A popular Lightning wallet that also works as a POS system. It's Australian‑owned and available for Android and iOS. Customers pay via QR code; merchants can quickly send funds to their bank or keep them in bitcoin.",
-      platforms: ["Android", "iOS"],
+      platforms: [
+        {
+          label: "iOS",
+          type: "iOS",
+          url: "https://apps.apple.com/au/app/wallet-of-satoshi-pos/id6470433713",
+        },
+        {
+          label: "Android",
+          type: "Android",
+          url: "https://play.google.com/store/apps/details?id=com.walletofsatoshi.pos",
+        },
+        {
+          label: "Web",
+          type: "Web",
+          url: "https://www.walletofsatoshi.com/pos",
+        },
+      ],
       imagePath: "/images/wallet-of-satoshi-logo.svg",
     },
     {
       name: "Bitaroo POS",
       description:
         "Bitaroo offers a POS app for Android and iOS that lets merchants accept bitcoin over the Lightning Network. Bitaroo is an Australian exchange with local support.",
-      platforms: ["Android", "iOS"],
+      platforms: [
+        {
+          label: "iOS",
+          type: "iOS",
+          url: "https://apps.apple.com/au/app/bitaroo-express-buy-bitcoin/id6444825898",
+        },
+        {
+          label: "Android",
+          type: "Android",
+          url: "https://play.google.com/store/apps/details?id=au.com.bitaroo.express&hl=en_AU",
+        },
+        {
+          label: "Web",
+          type: "Web",
+          url: "https://www.bitaroo.com.au/point-of-sale/",
+        },
+      ],
       imagePath: "/images/bitaroo-logo.svg",
     },
     {
       name: "IBEX Pay",
       description:
         "An international Lightning payment processor that provides POS hardware and web apps for accepting bitcoin. Settlements can be in bitcoin or converted to fiat.",
-      platforms: ["Web"],
+      platforms: [
+        {
+          label: "Web",
+          type: "Web",
+          url: "https://www.ibexpay.io/",
+        },
+      ],
       imagePath: "/images/ibex-logo.svg",
     },
     {
       name: "Blink",
       description:
         "A payment provider offering a simple interface to accept bitcoin payments on‑site or online.",
-      platforms: ["Web"],
+      platforms: [
+        {
+          label: "iOS",
+          type: "iOS",
+          url: "https://apps.apple.com/ng/app/bitcoin-beach-wallet/id1531383905",
+        },
+        {
+          label: "Android",
+          type: "Android",
+          url: "https://play.google.com/store/apps/details?id=com.galoyapp",
+        },
+        {
+          label: "Web",
+          type: "Web",
+          url: "https://www.blink.sv/en/merchant-tools",
+        },
+      ],
       imagePath: "/images/blink-logo.svg",
     },
     {
       name: "Manna",
       description:
         "Manna Bitcoin provides tools for merchants to accept bitcoin quickly and securely.",
-      platforms: ["Web"],
+      platforms: [
+        {
+          label: "iOS",
+          type: "iOS",
+          url: "https://apps.apple.com/us/app/manna-bitcoin-wallet/id6745337602",
+        },
+        {
+          label: "Android",
+          type: "Android",
+          url: "https://play.google.com/store/apps/details?id=com.lightning.manna&hl=en_AU",
+        },
+        {
+          label: "Web",
+          type: "Web",
+          url: "https://mannabitcoin.com/",
+        },
+      ],
       imagePath: "/images/manna-logo.png",
     },
   ];
@@ -96,19 +174,41 @@ export default function POSOptions() {
             <h3 className="text-xl font-semibold mb-3">{option.name}</h3>
             <p className="text-neutral-dark mb-4 text-sm leading-relaxed">{option.description}</p>
             <div className="flex flex-wrap gap-2">
-              {option.platforms.map((platform) => (
-                <span
-                  key={platform}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-xs rounded-full"
-                >
-                  {platform === "Android" || platform === "iOS" ? (
-                    <Smartphone className="h-3 w-3" />
-                  ) : (
-                    <Globe className="h-3 w-3" />
-                  )}
-                  {platform}
-                </span>
-              ))}
+              {option.platforms.map((platform) => {
+                const Icon = platform.type === "Web" ? Globe : Smartphone;
+                const content = (
+                  <>
+                    <Icon className="h-3 w-3" />
+                    {platform.label}
+                  </>
+                );
+
+                const baseClasses =
+                  "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors text-[#7C2F00] bg-[#FFE4CC]";
+
+                if (platform.url) {
+                  return (
+                    <a
+                      key={platform.label}
+                      href={platform.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${baseClasses} hover:bg-[#FFD4A8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF8A00]`}
+                    >
+                      {content}
+                    </a>
+                  );
+                }
+
+                return (
+                  <span
+                    key={platform.label}
+                    className={baseClasses}
+                  >
+                    {content}
+                  </span>
+                );
+              })}
             </div>
           </div>
         ))}
