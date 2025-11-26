@@ -60,12 +60,15 @@ export default function Footer() {
                   Terms of Use
                 </Link>
               </li>
-              <li>
-                <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-neutral-dark hover:text-primary">
-                  BTCMap.org
-                </Link>
-              </li>
             </ul>
+            <Link
+              href="https://openstreetmap.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-neutral-dark hover:text-primary inline-block mt-3"
+            >
+              OpenStreetMap
+            </Link>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
@@ -77,6 +80,10 @@ export default function Footer() {
         <div className="mt-8 pt-8 border-t text-center text-sm text-neutral-dark">
           <p>Built on open data (OpenStreetMap)</p>
           <p className="mt-1 text-xs">Geocoding powered by OpenStreetMap Nominatim</p>
+        <p className="mt-2 text-xs">
+          Website managed by Avuncular Group Pty Ltd, an Aussie company dedicated to supporting
+          bitcoin education.
+        </p>
         </div>
       </div>
     </footer>
