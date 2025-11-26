@@ -21,18 +21,11 @@ export default function OnlinePayment() {
       logoPath: "/images/btcpay-logo.svg",
     },
     {
-      name: "BitPay",
+      name: "opennode",
       description:
-        "A widely‑used payment processor that lets businesses accept bitcoin and other cryptocurrencies and settle in fiat. It offers plugins for major ecommerce platforms and invoicing tools.",
-      features: ["Widely used", "Fiat conversion", "Ecommerce plugins"],
-      logoPath: "/images/bitpay-logo.svg",
-    },
-    {
-      name: "RelayPay",
-      description:
-        "An Australian payment gateway that supports bitcoin and provides conversion to Australian dollars. It offers APIs and checkout widgets for online stores.",
-      features: ["Australian", "AUD conversion", "APIs & widgets"],
-      logoPath: "/images/relaypay-logo.svg",
+        "A payment platform where businesses can accept or send Bitcoin payments instantly via the Lightning Network or on-chain, with minimal fees and no chargebacks. It offers secure hosted checkout pages, payment buttons, ecommerce plug-ins and APIs, allowing merchants to accept Bitcoin globally and convert it to local currency if desired.",
+      features: ["Lightning payments", "On-chain", "Hosted checkout", "Fiat conversion"],
+      logoPath: "/images/opennode-logo.svg",
     },
   ];
 
