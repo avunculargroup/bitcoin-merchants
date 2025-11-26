@@ -33,7 +33,7 @@ export default function OnlinePayment() {
   ];
 
   return (
-    <section className="container py-16 md:py-20 bg-neutral">
+    <section className="container py-16 md:py-20 bg-neutral mb-16 md:mb-24">
       <h2 className="text-3xl md:text-4xl font-bold mb-6">Accepting bitcoin online</h2>
       <p className="text-lg text-neutral-dark mb-8 max-w-3xl">
         If you run an ecommerce site or invoice clients online, several platforms can help you accept bitcoin. These solutions provide easy integration, flexible settlement options, and support for multiple currencies.
