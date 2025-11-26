@@ -5,6 +5,7 @@ import SquareSection from "@/components/SquareSection";
 import POSOptions from "@/components/POSOptions";
 import OnlinePayment from "@/components/OnlinePayment";
 import HomeFAQ from "@/components/HomeFAQ";
+import ContactSupportCard from "@/components/ContactSupportCard";
 
 export default function Home() {
   return (
@@ -15,6 +16,7 @@ export default function Home() {
       <SquareSection />
       <POSOptions />
       <OnlinePayment />
+      <ContactSupportCard />
       <HomeFAQ />
     </main>
   );
