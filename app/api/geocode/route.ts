@@ -285,10 +285,8 @@ export async function POST(request: NextRequest) {
     const latitude = parseFloat(result.lat);
     const longitude = parseFloat(result.lon);
     
-    // Cache the result (only if database is available)
-    if (databaseAvailable) {
-      await cacheResult(normalizedAddress, latitude, longitude, formattedAddress);
-    }
+    // Cache the result (cacheResult handles database errors gracefully)
+    await cacheResult(normalizedAddress, latitude, longitude, formattedAddress);
     
     return NextResponse.json({
       latitude,
