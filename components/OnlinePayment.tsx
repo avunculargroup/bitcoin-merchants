@@ -78,11 +78,8 @@ export default function OnlinePayment() {
               <p className="text-neutral-dark mb-4 text-sm leading-relaxed">{option.description}</p>
               <div className="flex flex-wrap gap-2">
                 {option.features.map((feature) => (
-                  <span
-                    key={feature}
-                    className="inline-flex items-center px-3 py-1 bg-secondary/10 text-secondary text-xs rounded-full"
-                  >
-                    {feature}
+                  <span key={feature} className="text-secondary-dark text-sm font-semibold">
+                    #{feature}
                   </span>
                 ))}
               </div>
