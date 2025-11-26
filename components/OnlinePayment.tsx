@@ -80,7 +80,7 @@ export default function OnlinePayment() {
                 {option.features.map((feature) => (
                   <span
                     key={feature}
-                    className="inline-flex items-center px-3 py-1 bg-secondary/10 text-secondary text-xs rounded-full"
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-[#7C2F00] bg-[#FFE4CC] transition-colors"
                   >
                     {feature}
                   </span>
