@@ -71,14 +71,36 @@ export default function POSOptions() {
       name: "IBEX Pay",
       description:
         "An international Lightning payment processor that provides POS hardware and web apps for accepting bitcoin. Settlements can be in bitcoin or converted to fiat.",
-      platforms: [{ label: "Web", type: "Web" }],
+      platforms: [
+        {
+          label: "Web",
+          type: "Web",
+          url: "https://www.ibexpay.io/",
+        },
+      ],
       imagePath: "/images/ibex-logo.svg",
     },
     {
       name: "Blink",
       description:
         "A payment provider offering a simple interface to accept bitcoin payments on‑site or online.",
-      platforms: [{ label: "Web", type: "Web" }],
+      platforms: [
+        {
+          label: "iOS",
+          type: "iOS",
+          url: "https://apps.apple.com/ng/app/bitcoin-beach-wallet/id1531383905",
+        },
+        {
+          label: "Android",
+          type: "Android",
+          url: "https://play.google.com/store/apps/details?id=com.galoyapp",
+        },
+        {
+          label: "Web",
+          type: "Web",
+          url: "https://www.blink.sv/en/merchant-tools",
+        },
+      ],
       imagePath: "/images/blink-logo.svg",
     },
     {
