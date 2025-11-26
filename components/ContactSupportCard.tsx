@@ -16,9 +16,9 @@ export default function ContactSupportCard() {
               Contact our team for more advice
             </h2>
             <p className="text-base text-white/90 md:text-lg">
-              Speak directly with the BTCMap crew for tailored guidance on adding or
-              updating your listing. We&apos;re here to help Australian merchants get
-              live with bitcoin quickly.
+              Speak directly with one of our team for tailored guidance on accepting
+              bitcoin and being on the map. We&apos;re here to help Australian retailers
+              take advantage of internet money.
             </p>
           </div>
           <Button
