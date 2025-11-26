@@ -8,12 +8,53 @@ export function getEnvVar(name: string, required = true): string {
   return value || '';
 }
 
+function ensurePgBouncerParam(url: string): string {
+  if (!url) {
+    return url;
+  }
+
+  if (url.toLowerCase().includes('pgbouncer=')) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url);
+    const looksLikePooler =
+      parsed.hostname.includes('pooler.') || parsed.port === '6543';
+
+    if (!looksLikePooler) {
+      return url;
+    }
+
+    parsed.searchParams.set('pgbouncer', 'true');
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        'DATABASE_URL is missing "?pgbouncer=true". Automatically adding it to avoid prepared statement errors with connection pooling.',
+      );
+    }
+
+    return parsed.toString();
+  } catch {
+    const separator = url.includes('?') ? '&' : '?';
+    const adjustedUrl = `${url}${separator}pgbouncer=true`;
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        'DATABASE_URL is missing "?pgbouncer=true". Automatically adding it to avoid prepared statement errors with connection pooling.',
+      );
+    }
+
+    return adjustedUrl;
+  }
+}
+
 // Construct DATABASE_URL from Supabase variables if provided
 function getDatabaseUrl(): string {
   // If DATABASE_URL is explicitly provided, use it (recommended)
   const explicitDbUrl = process.env.DATABASE_URL;
   if (explicitDbUrl) {
-    return explicitDbUrl;
+    return ensurePgBouncerParam(explicitDbUrl);
   }
 
   // Otherwise, try to construct from Supabase variables
@@ -29,7 +70,11 @@ function getDatabaseUrl(): string {
       const projectRef = urlMatch[1];
       // Use connection pooling for better performance
       // Note: You may need to adjust the region based on your Supabase project location
-      return `postgresql://postgres.${projectRef}:${encodeURIComponent(supabaseDbPassword)}@aws-0-${supabaseRegion}.pooler.supabase.com:6543/postgres?pgbouncer=true`;
+      return ensurePgBouncerParam(
+        `postgresql://postgres.${projectRef}:${encodeURIComponent(
+          supabaseDbPassword,
+        )}@aws-0-${supabaseRegion}.pooler.supabase.com:6543/postgres?pgbouncer=true`,
+      );
     }
   }
 
