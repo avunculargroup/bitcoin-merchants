@@ -183,6 +183,9 @@ export default function POSOptions() {
                   </>
                 );
 
+                const baseClasses =
+                  "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors text-[#7C2F00] bg-[#FFE4CC]";
+
                 if (platform.url) {
                   return (
                     <a
@@ -190,7 +193,7 @@ export default function POSOptions() {
                       href={platform.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-xs rounded-full transition-colors hover:bg-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                      className={`${baseClasses} hover:bg-[#FFD4A8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF8A00]`}
                     >
                       {content}
                     </a>
@@ -200,7 +203,7 @@ export default function POSOptions() {
                 return (
                   <span
                     key={platform.label}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-xs rounded-full"
+                    className={baseClasses}
                   >
                     {content}
                   </span>
