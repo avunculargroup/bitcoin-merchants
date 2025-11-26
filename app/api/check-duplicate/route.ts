@@ -125,42 +125,75 @@ export async function POST(request: NextRequest) {
     const data: OverpassResponse = await response.json();
 
     if (data.elements && data.elements.length > 0) {
-      // Find the best matching duplicate
-      // Prioritize: 1) Bitcoin-tagged items, 2) Name matches
+      // If multiple duplicates, select the one with the most recent changeset
+      // Fetch changeset info for each element to compare timestamps
       let bestMatch = data.elements[0];
-      let bestScore = 0;
+      let mostRecentTimestamp: Date | null = null;
 
-      for (const element of data.elements) {
-        let score = 0;
-        const tags = element.tags || {};
-        
-        // Higher score for bitcoin-tagged items
-        if (tags['currency:XBT'] || tags['payment:bitcoin'] || tags['bitcoin:accepts']) {
-          score += 10;
-        }
-        
-        // Score for name similarity
-        if (tags.name && businessName) {
-          const elementName = tags.name.toLowerCase();
-          const searchName = businessName.toLowerCase();
-          
-          // Exact match gets highest score
-          if (elementName === searchName) {
-            score += 20;
-          } else {
-            // Check if keywords match
-            const elementKeywords = extractKeywords(tags.name);
-            const searchKeywords = extractKeywords(businessName);
-            const matchingKeywords = elementKeywords.filter(k => 
-              searchKeywords.some(sk => sk.includes(k) || k.includes(sk))
-            );
-            score += matchingKeywords.length * 2;
+      // Fetch changeset information for each duplicate
+      const changesetPromises = data.elements.map(async (element) => {
+        try {
+          // First, fetch the element to get its changeset ID
+          const elementType = element.type === 'way' ? 'way' : 'node';
+          const elementResponse = await fetch(
+            `https://api.openstreetmap.org/api/0.6/${elementType}/${element.id}`,
+            {
+              headers: {
+                'User-Agent': 'Aussie-Bitcoin-Merchants/1.0',
+              },
+            }
+          );
+
+          if (!elementResponse.ok) {
+            return null;
           }
+
+          const elementXml = await elementResponse.text();
+          const changesetMatch = elementXml.match(/changeset="(\d+)"/);
+          if (!changesetMatch) {
+            return null;
+          }
+
+          const changesetId = changesetMatch[1];
+
+          // Fetch changeset details to get timestamp
+          const changesetResponse = await fetch(
+            `https://api.openstreetmap.org/api/0.6/changeset/${changesetId}`,
+            {
+              headers: {
+                'User-Agent': 'Aussie-Bitcoin-Merchants/1.0',
+              },
+            }
+          );
+
+          if (!changesetResponse.ok) {
+            return null;
+          }
+
+          const changesetXml = await changesetResponse.text();
+          const timestampMatch = changesetXml.match(/created_at="([^"]+)"/);
+          if (!timestampMatch) {
+            return null;
+          }
+
+          const timestamp = new Date(timestampMatch[1]);
+          return { element, timestamp, changesetId: parseInt(changesetId, 10) };
+        } catch (error) {
+          console.warn(`Failed to fetch changeset info for ${element.type} ${element.id}:`, error);
+          return null;
         }
-        
-        if (score > bestScore) {
-          bestScore = score;
-          bestMatch = element;
+      });
+
+      const changesetResults = await Promise.all(changesetPromises);
+      const validResults = changesetResults.filter((r): r is { element: typeof data.elements[0]; timestamp: Date; changesetId: number } => r !== null);
+
+      if (validResults.length > 0) {
+        // Find the element with the most recent changeset
+        for (const result of validResults) {
+          if (!mostRecentTimestamp || result.timestamp > mostRecentTimestamp) {
+            mostRecentTimestamp = result.timestamp;
+            bestMatch = result.element;
+          }
         }
       }
 
