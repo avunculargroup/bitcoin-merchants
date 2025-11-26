@@ -1,9 +1,14 @@
 "use client";
 
 import { Search, Edit, CheckCircle } from "lucide-react";
+import type { ReactNode } from "react";
 
 export default function StepByStep() {
-  const steps = [
+  const steps: {
+    icon: typeof Search;
+    title: string;
+    description: ReactNode;
+  }[] = [
     {
       icon: Search,
       title: "Search your business",
@@ -11,13 +16,26 @@ export default function StepByStep() {
     },
     {
       icon: Edit,
-      title: "Enter details & verify",
+      title: "Enter details",
       description: "Review pre-populated details or fill in your business name, address, category, and Bitcoin payment acceptance details. Use our secure, accessible form with ALTCHA for spam prevention.",
     },
     {
       icon: CheckCircle,
       title: "Submit & get listed",
-      description: "Your submission will be reviewed and uploaded to OpenStreetMap. We'll set clear expectations about review time and ensure your data is handled responsibly.",
+      description: (
+        <>
+          Your submission will be reviewed and uploaded to{" "}
+          <a
+            href="https://www.openstreetmap.org"
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline underline-offset-4"
+          >
+            OpenStreetMap
+          </a>
+          .
+        </>
+      ),
     },
   ];
 

@@ -38,11 +38,10 @@ export default function TrustBadges() {
           </div>
           <h3 className="text-xl font-semibold mb-2">Australian Trust Marks</h3>
           <p className="text-neutral-dark mb-4">
-            We're 100% Australian Owned and operate on a .au domain, ensuring credibility and local ownership.
+            We're 100% Australian owned, ensuring credibility and local ownership.
           </p>
           <div className="flex justify-center gap-4 mt-4">
             <span className="px-3 py-1 bg-primary text-white text-sm rounded">100% Australian Owned</span>
-            <span className="px-3 py-1 bg-secondary text-white text-sm rounded">.au Domain</span>
           </div>
         </div>
       </div>
