@@ -9,15 +9,20 @@ export default function Footer() {
       <div className="container py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <Link href="/" className="inline-block mb-4">
-              <Image
-                src="/images/aussie_bitcoin_merchants.png"
-                alt="Aussie Bitcoin Merchants"
-                width={180}
-                height={40}
-                className="h-8 w-auto"
-              />
-            </Link>
+            <div className="flex items-center gap-3 mb-4">
+              <Link href="/" className="inline-block">
+                <Image
+                  src="/images/aussie_bitcoin_merchants.png"
+                  alt="Aussie Bitcoin Merchants"
+                  width={180}
+                  height={40}
+                  className="h-8 w-auto"
+                />
+              </Link>
+              <span className="text-lg font-semibold text-neutral-dark">
+                Aussie Bitcoin Merchants
+              </span>
+            </div>
             <p className="text-sm text-neutral-dark">
               Helping Australian businesses get on the Bitcoin map.
             </p>
