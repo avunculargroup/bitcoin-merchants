@@ -13,6 +13,21 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ChevronDown, ChevronUp } from "lucide-react";
 
+const websiteDomainPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/i;
+
+const normalizeWebsite = (value?: string | null) => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (/^http:\/\//i.test(trimmed)) {
+    return trimmed.replace(/^http:\/\//i, "https://");
+  }
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
+};
+
 const formSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
   description: z.string().optional(),
@@ -26,7 +41,17 @@ const formSchema = z.object({
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   phone: z.string().optional(),
-  website: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  website: z
+    .string()
+    .trim()
+    .refine(
+      (value) => {
+        if (!value) return true;
+        return websiteDomainPattern.test(value);
+      },
+      { message: "Must be a valid website (domain + TLD)" }
+    )
+    .optional(),
   email: z.string().email("Must be a valid email").optional().or(z.literal("")),
   facebook: z.string().optional(),
   instagram: z.string().optional(),
@@ -321,11 +346,14 @@ export default function SubmitPage() {
     try {
       const captchaToken = altchaToken;
 
+      const normalizedWebsite = normalizeWebsite(data.website);
+
       const response = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
+          website: normalizedWebsite,
           captchaToken,
           bitcoinDetails: {
             onChain: data.onChain,
@@ -643,7 +671,7 @@ export default function SubmitPage() {
                   </div>
                   <div>
                     <Label htmlFor="website">Website</Label>
-                    <Input id="website" type="url" {...register("website")} />
+                    <Input id="website" type="text" {...register("website")} />
                     {errors.website && (
                       <p className="text-sm text-red-500 mt-1">{errors.website.message}</p>
                     )}

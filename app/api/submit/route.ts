@@ -3,6 +3,25 @@ import { prisma } from "@/lib/prisma";
 import { openChangeset, createNode, updateNode, updateWay, closeChangeset, fetchNode, fetchWay } from "@/lib/osm";
 import { rateLimit } from "@/lib/rate-limit";
 
+const websiteDomainPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/i;
+
+const formatWebsiteForOsm = (value?: string | null) => {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (!websiteDomainPattern.test(trimmed)) {
+    return null;
+  }
+  if (/^http:\/\//i.test(trimmed)) {
+    return trimmed.replace(/^http:\/\//i, "https://");
+  }
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
+};
+
 async function verifyCaptcha(token: string): Promise<boolean> {
   const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/verify-captcha`, {
     method: "POST",
@@ -163,6 +182,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const formattedWebsite = formatWebsiteForOsm(website);
+    if (formattedWebsite === null) {
+      return NextResponse.json(
+        { error: "Website must include a valid domain and TLD" },
+        { status: 400 }
+      );
+    }
+    const normalizedWebsite = formattedWebsite ?? undefined;
+
     // Check for duplicates
     let isDuplicate = false;
     let duplicateOsmId: number | null = null;
@@ -199,7 +227,7 @@ export async function POST(request: NextRequest) {
         latitude,
         longitude,
         phone,
-        website,
+        website: normalizedWebsite,
         email,
         facebook,
         instagram,
@@ -226,7 +254,7 @@ export async function POST(request: NextRequest) {
           state,
           city,
           phone,
-          website,
+          website: normalizedWebsite,
           email,
           facebook,
           instagram,
@@ -353,7 +381,7 @@ export async function POST(request: NextRequest) {
         state,
         city,
         phone,
-        website,
+        website: normalizedWebsite,
         email,
         facebook,
         instagram,
