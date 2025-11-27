@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 
 const websiteDomainPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/i;
 
@@ -425,13 +425,17 @@ export default function SubmitPage() {
     <div className="container py-20">
       <div className="max-w-3xl mx-auto">
         <div className="mb-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
-          <p className="text-sm md:text-base">
-            This form is for businesses that accept customers in person. If you want to register details for online or private appointments,{" "}
-            <a href="/contact" className="font-semibold text-primary underline">
-              email us
-            </a>
-            .
-          </p>
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" aria-hidden="true" />
+            <p className="text-sm md:text-base">
+              Please use this form only for businesses that customers can visit in person (shops, cafés, offices, etc.).{" "}
+              If the business operates only online or by private appointment, please{" "}
+              <a href="/contact" className="font-semibold text-primary underline">
+                email us
+              </a>{" "}
+              instead.
+            </p>
+          </div>
         </div>
         <h1 className="text-4xl font-bold mb-8">Add Your Business</h1>
 
