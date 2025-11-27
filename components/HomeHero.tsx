@@ -35,7 +35,7 @@ export default function HomeHero() {
               <Link href="/map">Register Your Business</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/map#how-it-works">Learn More</Link>
+              <Link href="#why-accept-bitcoin">Learn More</Link>
             </Button>
           </div>
         </div>
