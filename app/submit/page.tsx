@@ -429,7 +429,7 @@ export default function SubmitPage() {
             <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" aria-hidden="true" />
             <p className="text-sm md:text-base">
               Please use this form only for businesses that customers can visit in person (shops, cafés, offices, etc.).{" "}
-              If your business operates only online or by private appointment, please{" "}
+              If the business operates only online or by private appointment, please{" "}
               <a href="/contact" className="font-semibold text-primary underline">
                 email us
               </a>{" "}
