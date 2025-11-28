@@ -26,7 +26,7 @@ export default function ResourcesPage() {
             OpenStreetMap (OSM) is a collaborative project to create a free, editable map of the world. It's built by volunteers and is released under the Open Database License (ODbL).
           </p>
           <p className="text-neutral-dark mb-4">
-            Your business information is stored on OpenStreetMap, ensuring it's part of a global, open dataset that can be used by anyone. This means your listing will be available on BTCMap and many other services that use OSM data.
+            Your business information is stored on OpenStreetMap, ensuring it's part of a global, open dataset that can be used by anyone. This means your listing will be available on <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap</Link> and many other services that use OSM data.
           </p>
           <ul className="list-disc list-inside text-neutral-dark space-y-2">
             <li><Link href="https://www.openstreetmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">OpenStreetMap.org - View and edit the map</Link></li>
@@ -35,12 +35,12 @@ export default function ResourcesPage() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4">About BTCMap</h2>
+          <h2 className="text-2xl font-semibold mb-4">About <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap</Link></h2>
           <p className="text-neutral-dark mb-4">
-            BTCMap is a project that helps Bitcoin users find businesses and services that accept Bitcoin. It uses OpenStreetMap data to display locations on an interactive map.
+            <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap</Link> is a project that helps Bitcoin users find businesses and services that accept Bitcoin. It uses OpenStreetMap data to display locations on an interactive map.
           </p>
           <p className="text-neutral-dark mb-4">
-            By listing your business through this portal, you're making it easier for Bitcoin users to discover and support your business. Your listing will appear on BTCMap once it's been added to OpenStreetMap.
+            By listing your business through this portal, you're making it easier for Bitcoin users to discover and support your business. Your listing will appear on <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap</Link> once it's been added to OpenStreetMap.
           </p>
           <ul className="list-disc list-inside text-neutral-dark space-y-2">
             <li><Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap.org - View the Bitcoin map</Link></li>

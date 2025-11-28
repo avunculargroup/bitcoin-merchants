@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import Link from "next/link";
 import BusinessSearch from "@/components/BusinessSearch";
 import OpeningHoursInput from "@/components/OpeningHoursInput";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,8 @@ export default function SubmitPage() {
   const [altchaVerified, setAltchaVerified] = useState(false);
   const [altchaReady, setAltchaReady] = useState(false);
   const [showMoreDetail, setShowMoreDetail] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewData, setReviewData] = useState<FormData | null>(null);
   const altchaRef = useRef<any>(null);
 
   const {
@@ -332,41 +335,106 @@ export default function SubmitPage() {
   };
 
   const onSubmit = async (data: FormData) => {
-    setSubmitting(true);
-    setSubmitError(null);
-    setSubmitSuccess(null);
-
     // Validate ALTCHA is verified
     if (!altchaVerified || !altchaToken) {
       setSubmitError("Please complete the ALTCHA verification");
-      setSubmitting(false);
       return;
     }
 
+    // Show review modal instead of submitting directly
+    setReviewData(data);
+    setShowReviewModal(true);
+    setSubmitError(null);
+  };
+
+  // Helper function to format data for review
+  const formatReviewData = (data: FormData) => {
+    const bitcoinMethods = [];
+    if (data.onChain) bitcoinMethods.push("On-chain Bitcoin");
+    if (data.lightning) bitcoinMethods.push("Lightning Network");
+    if (data.lightningContactless) bitcoinMethods.push("Lightning Contactless");
+    if (data.other && data.other.length > 0) bitcoinMethods.push(...data.other);
+    
+    const acceptanceLocations = [];
+    if (data.inStore) acceptanceLocations.push("In-store");
+    if (data.online) acceptanceLocations.push("Online");
+
+    const addressParts = [
+      data.housenumber,
+      data.street,
+      data.suburb,
+      data.city,
+      data.state,
+      data.postcode,
+    ].filter(Boolean);
+
+    // Format category - remove prefix if present (e.g., "shop=cafe" -> "cafe")
+    const formatCategory = (category?: string) => {
+      if (!category) return "Not provided";
+      if (category.startsWith("shop=")) {
+        return category.replace("shop=", "");
+      }
+      if (category.startsWith("amenity=")) {
+        return category.replace("amenity=", "");
+      }
+      return category;
+    };
+
+    return {
+      businessName: data.businessName,
+      description: data.description,
+      category: formatCategory(data.category),
+      address: addressParts.length > 0 ? addressParts.join(", ") : "Not provided",
+      coordinates: data.latitude && data.longitude 
+        ? `${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`
+        : "Not provided",
+      phone: data.phone || "Not provided",
+      website: data.website || "Not provided",
+      email: data.email || "Not provided",
+      facebook: data.facebook || "Not provided",
+      instagram: data.instagram || "Not provided",
+      bitcoinMethods: bitcoinMethods.length > 0 ? bitcoinMethods.join(", ") : "None selected",
+      lightningOperator: data.lightningOperator === "other" 
+        ? data.lightningOperatorOther 
+        : data.lightningOperator || "Not provided",
+      acceptanceLocations: acceptanceLocations.length > 0 ? acceptanceLocations.join(", ") : "None selected",
+      openingHours: data.openingHours || "Not provided",
+      wheelchair: data.wheelchair || "Not provided",
+      notes: data.notes || "Not provided",
+    };
+  };
+
+  const confirmSubmit = async () => {
+    if (!reviewData) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccess(null);
+    setShowReviewModal(false);
+
     try {
       const captchaToken = altchaToken;
-
-      const normalizedWebsite = normalizeWebsite(data.website);
+      const normalizedWebsite = normalizeWebsite(reviewData.website);
 
       const response = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...data,
+          ...reviewData,
           website: normalizedWebsite,
           captchaToken,
           bitcoinDetails: {
-            onChain: data.onChain,
-            lightning: data.lightning,
-            lightningContactless: data.lightningContactless,
-            lightningOperator: data.lightningOperator === "other" ? data.lightningOperatorOther : data.lightningOperator,
-            other: data.other,
-            inStore: data.inStore,
-            online: data.online,
+            onChain: reviewData.onChain,
+            lightning: reviewData.lightning,
+            lightningContactless: reviewData.lightningContactless,
+            lightningOperator: reviewData.lightningOperator === "other" ? reviewData.lightningOperatorOther : reviewData.lightningOperator,
+            other: reviewData.other,
+            inStore: reviewData.inStore,
+            online: reviewData.online,
           },
-          housenumber: data.housenumber,
-          facebook: data.facebook,
-          instagram: data.instagram,
+          housenumber: reviewData.housenumber,
+          facebook: reviewData.facebook,
+          instagram: reviewData.instagram,
         }),
       });
 
@@ -411,7 +479,7 @@ export default function SubmitPage() {
             </div>
           )}
           <p className="text-neutral-dark mb-6">
-            Your listing will appear on BTCMap and other Bitcoin maps once the data has propagated (usually within a few hours).
+            Your listing will appear on <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap</Link> and other Bitcoin maps once the data has propagated (usually within a few hours).
           </p>
           <Button asChild>
             <a href="/map">Return Home</a>
@@ -422,8 +490,137 @@ export default function SubmitPage() {
   }
 
   return (
-    <div className="container py-20">
-      <div className="max-w-3xl mx-auto">
+    <>
+      {/* Review Modal */}
+      {showReviewModal && reviewData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b flex-shrink-0">
+              <h2 className="text-2xl font-bold">Review Your Submission</h2>
+              <p className="text-sm text-neutral-dark mt-1">Please review your information before submitting</p>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="px-6 py-4 overflow-y-auto flex-1">
+              {(() => {
+                const formatted = formatReviewData(reviewData);
+                return (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-neutral-dark mb-1">Business Name</h3>
+                      <p className="text-neutral-dark">{formatted.businessName}</p>
+                    </div>
+
+                    {formatted.description && (
+                      <div>
+                        <h3 className="font-semibold text-neutral-dark mb-1">Description</h3>
+                        <p className="text-neutral-dark">{formatted.description}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <h3 className="font-semibold text-neutral-dark mb-1">Category</h3>
+                      <p className="text-neutral-dark">{formatted.category}</p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-neutral-dark mb-1">Address</h3>
+                      <p className="text-neutral-dark">{formatted.address}</p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-neutral-dark mb-1">Coordinates</h3>
+                      <p className="text-neutral-dark text-sm">{formatted.coordinates}</p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-neutral-dark mb-1">Contact Information</h3>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-neutral-dark">Phone:</span> {formatted.phone}</p>
+                        <p><span className="text-neutral-dark">Website:</span> {formatted.website}</p>
+                        <p><span className="text-neutral-dark">Email:</span> {formatted.email}</p>
+                        <p><span className="text-neutral-dark">Facebook:</span> {formatted.facebook}</p>
+                        <p><span className="text-neutral-dark">Instagram:</span> {formatted.instagram}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-neutral-dark mb-1">Bitcoin Payment Methods</h3>
+                      <p className="text-neutral-dark">{formatted.bitcoinMethods}</p>
+                    </div>
+
+                    {formatted.lightningOperator !== "Not provided" && (
+                      <div>
+                        <h3 className="font-semibold text-neutral-dark mb-1">Lightning Operator</h3>
+                        <p className="text-neutral-dark">{formatted.lightningOperator}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <h3 className="font-semibold text-neutral-dark mb-1">Acceptance Locations</h3>
+                      <p className="text-neutral-dark">{formatted.acceptanceLocations}</p>
+                    </div>
+
+                    {formatted.openingHours !== "Not provided" && (
+                      <div>
+                        <h3 className="font-semibold text-neutral-dark mb-1">Opening Hours</h3>
+                        <p className="text-neutral-dark">{formatted.openingHours}</p>
+                      </div>
+                    )}
+
+                    {formatted.wheelchair !== "Not provided" && (
+                      <div>
+                        <h3 className="font-semibold text-neutral-dark mb-1">Wheelchair Access</h3>
+                        <p className="text-neutral-dark">{formatted.wheelchair}</p>
+                      </div>
+                    )}
+
+                    {formatted.notes !== "Not provided" && (
+                      <div>
+                        <h3 className="font-semibold text-neutral-dark mb-1">Additional Notes</h3>
+                        <p className="text-neutral-dark">{formatted.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Footer with buttons */}
+            <div className="px-6 py-4 border-t flex-shrink-0 flex flex-col sm:flex-row gap-3 sm:justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowReviewModal(false);
+                  setReviewData(null);
+                }}
+                disabled={submitting}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmSubmit}
+                disabled={submitting}
+                className="w-full sm:w-auto"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Confirm & Submit"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="container py-20">
+        <div className="max-w-3xl mx-auto">
         <div className="mb-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" aria-hidden="true" />
@@ -819,6 +1016,7 @@ export default function SubmitPage() {
         </form>
       </div>
     </div>
+    </>
   );
 }
 

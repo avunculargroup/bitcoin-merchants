@@ -23,6 +23,9 @@ export default function Header() {
             <Link href="/map" className="text-sm font-medium text-neutral-dark hover:text-primary transition-colors">
               Add Your Business
             </Link>
+            <Link href="/about" className="text-sm font-medium text-neutral-dark hover:text-primary transition-colors">
+              About
+            </Link>
             <Link href="/map#faq" className="text-sm font-medium text-neutral-dark hover:text-primary transition-colors">
               FAQ
             </Link>

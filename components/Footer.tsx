@@ -65,7 +65,15 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-sm text-neutral-dark">
-              <li>Email: info@bitcoinmerchants.com.au</li>
+              <li>
+                Email:{" "}
+                <a
+                  href="mailto:info@bitcoinmerchants.com.au"
+                  className="text-primary hover:underline"
+                >
+                  info@bitcoinmerchants.com.au
+                </a>
+              </li>
             </ul>
           </div>
         </div>

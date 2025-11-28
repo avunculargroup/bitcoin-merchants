@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function TermsPage() {
   return (
     <div className="container py-20">
@@ -14,7 +16,7 @@ export default function TermsPage() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Service Description</h2>
           <p className="text-neutral-dark mb-4">
-            The Aussie Bitcoin Merchants portal allows Australian businesses to submit information about their Bitcoin-accepting businesses for publication on OpenStreetMap. This information is then used by BTCMap and other services to display your business on maps.
+            The Aussie Bitcoin Merchants portal allows Australian businesses to submit information about their Bitcoin-accepting businesses for publication on OpenStreetMap. This information is then used by <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap</Link> and other services to display your business on maps.
           </p>
         </section>
 
@@ -26,7 +28,7 @@ export default function TermsPage() {
           <ul className="list-disc list-inside text-neutral-dark space-y-2">
             <li>Your submission will be released under the Open Database License (ODbL)</li>
             <li>Your business information will be published on OpenStreetMap</li>
-            <li>Your information may be used by BTCMap and other services that use OpenStreetMap data</li>
+            <li>Your information may be used by <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap</Link> and other services that use OpenStreetMap data</li>
             <li>You have the right to submit this information and it does not infringe on any third-party rights</li>
           </ul>
         </section>

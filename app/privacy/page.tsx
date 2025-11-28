@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function PrivacyPage() {
   return (
     <div className="container py-20">
@@ -44,7 +46,7 @@ export default function PrivacyPage() {
           <ul className="list-disc list-inside text-neutral-dark space-y-2">
             <li>Stored in our secure database for audit and moderation purposes</li>
             <li>Published to OpenStreetMap under the Open Database License (ODbL)</li>
-            <li>Made publicly available on BTCMap and other services that use OpenStreetMap data</li>
+            <li>Made publicly available on <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap</Link> and other services that use OpenStreetMap data</li>
             <li>NOT sold or shared with third parties for marketing purposes</li>
           </ul>
         </section>
