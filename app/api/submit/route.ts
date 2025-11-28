@@ -1,9 +1,247 @@
 import { NextRequest, NextResponse } from "next/server";
+import Mailjet from "node-mailjet";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 import { openChangeset, createNode, updateNode, updateWay, closeChangeset, fetchNode, fetchWay } from "@/lib/osm";
 import { rateLimit } from "@/lib/rate-limit";
 
 const websiteDomainPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/i;
+
+const INFO_EMAIL = "info@bitcoinmerchants.com.au";
+
+type BitcoinDetails = {
+  onChain?: boolean;
+  lightning?: boolean;
+  lightningContactless?: boolean;
+  lightningOperator?: string;
+  other?: string[];
+  inStore?: boolean;
+  online?: boolean;
+};
+
+type SubmissionEmailDetails = {
+  businessName: string;
+  description?: string;
+  category?: string;
+  housenumber?: string;
+  street?: string;
+  suburb?: string;
+  postcode?: string;
+  state?: string;
+  city?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  phone?: string;
+  website?: string;
+  email?: string;
+  facebook?: string;
+  instagram?: string;
+  openingHours?: string;
+  wheelchair?: string;
+  notes?: string;
+  bitcoinDetails?: BitcoinDetails;
+};
+
+type SubmissionNotificationPayload = {
+  submissionId: string;
+  osmNodeId: number;
+  osmNodeUrl: string;
+  details: SubmissionEmailDetails;
+};
+
+const escapeHtml = (value: string) =>
+  value.replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      case "'":
+        return "&#39;";
+      default:
+        return char;
+    }
+  });
+
+const getDisplayValue = (value?: string | null, fallback = "Not provided") => {
+  if (value === undefined || value === null) {
+    return fallback;
+  }
+  const trimmed = `${value}`.trim();
+  return trimmed ? trimmed : fallback;
+};
+
+const getHtmlValue = (value?: string | null, fallback = "Not provided") =>
+  escapeHtml(getDisplayValue(value, fallback)).replace(/\n/g, "<br />");
+
+const formatAddress = (details: SubmissionEmailDetails) => {
+  const parts = [
+    details.housenumber,
+    details.street,
+    details.suburb,
+    details.city,
+    details.state,
+    details.postcode,
+  ]
+    .map((part) => part?.trim())
+    .filter(Boolean);
+
+  return parts.join(", ") || "Not provided";
+};
+
+const formatCoordinates = (details: SubmissionEmailDetails) => {
+  if (typeof details.latitude === "number" && typeof details.longitude === "number") {
+    return `${details.latitude.toFixed(6)}, ${details.longitude.toFixed(6)}`;
+  }
+  return "Not provided";
+};
+
+const formatCategory = (category?: string) => {
+  if (!category) return "Not provided";
+  if (category.startsWith("shop=")) {
+    return category.replace("shop=", "");
+  }
+  if (category.startsWith("amenity=")) {
+    return category.replace("amenity=", "");
+  }
+  return category;
+};
+
+const describeBitcoinAcceptance = (details?: BitcoinDetails) => {
+  if (!details) {
+    return {
+      methods: "Not specified",
+      lightningOperator: "Not specified",
+      acceptance: "Not specified",
+    };
+  }
+
+  const methods: string[] = [];
+  if (details.onChain) methods.push("On-chain");
+  if (details.lightning) methods.push("Lightning");
+  if (details.lightningContactless) methods.push("Lightning Contactless");
+  if (details.other && details.other.length) methods.push(...details.other);
+
+  const acceptance: string[] = [];
+  if (details.inStore) acceptance.push("In-store");
+  if (details.online) acceptance.push("Online");
+
+  return {
+    methods: methods.length ? methods.join(", ") : "Not specified",
+    lightningOperator: details.lightningOperator?.trim() || "Not specified",
+    acceptance: acceptance.length ? acceptance.join(", ") : "Not specified",
+  };
+};
+
+const buildSubmissionEmailContent = ({ submissionId, osmNodeId, osmNodeUrl, details }: SubmissionNotificationPayload) => {
+  const category = formatCategory(details.category);
+  const address = formatAddress(details);
+  const coordinates = formatCoordinates(details);
+  const bitcoin = describeBitcoinAcceptance(details.bitcoinDetails);
+
+  const textLines = [
+    "A new business submission was published to OpenStreetMap.",
+    "",
+    `Submission ID: ${submissionId}`,
+    `OSM Node ID: ${osmNodeId}`,
+    `OSM Link: ${osmNodeUrl}`,
+    "",
+    "Business Details",
+    `Name: ${details.businessName}`,
+    `Description: ${getDisplayValue(details.description)}`,
+    `Category: ${category}`,
+    `Address: ${address}`,
+    `Coordinates: ${coordinates}`,
+    `Phone: ${getDisplayValue(details.phone)}`,
+    `Website: ${getDisplayValue(details.website)}`,
+    `Email: ${getDisplayValue(details.email)}`,
+    `Facebook: ${getDisplayValue(details.facebook)}`,
+    `Instagram: ${getDisplayValue(details.instagram)}`,
+    `Opening Hours: ${getDisplayValue(details.openingHours)}`,
+    `Wheelchair Access: ${getDisplayValue(details.wheelchair)}`,
+    `Notes: ${getDisplayValue(details.notes)}`,
+    "",
+    "Bitcoin Acceptance",
+    `Methods: ${bitcoin.methods}`,
+    `Lightning Operator: ${bitcoin.lightningOperator}`,
+    `Acceptance Locations: ${bitcoin.acceptance}`,
+  ];
+
+  const textBody = textLines.join("\n");
+
+  const htmlBody = `
+    <h3>New Business Submission Added to OSM</h3>
+    <p>A submission was successfully uploaded to OpenStreetMap.</p>
+    <p>
+      <strong>Submission ID:</strong> ${getHtmlValue(submissionId)}<br />
+      <strong>OSM Node:</strong> <a href="${osmNodeUrl}" target="_blank" rel="noopener noreferrer">${osmNodeId}</a>
+    </p>
+    <h4>Business Details</h4>
+    <ul>
+      <li><strong>Name:</strong> ${getHtmlValue(details.businessName)}</li>
+      <li><strong>Description:</strong> ${getHtmlValue(details.description)}</li>
+      <li><strong>Category:</strong> ${getHtmlValue(category)}</li>
+      <li><strong>Address:</strong> ${getHtmlValue(address)}</li>
+      <li><strong>Coordinates:</strong> ${getHtmlValue(coordinates)}</li>
+      <li><strong>Phone:</strong> ${getHtmlValue(details.phone)}</li>
+      <li><strong>Website:</strong> ${getHtmlValue(details.website)}</li>
+      <li><strong>Email:</strong> ${getHtmlValue(details.email)}</li>
+      <li><strong>Facebook:</strong> ${getHtmlValue(details.facebook)}</li>
+      <li><strong>Instagram:</strong> ${getHtmlValue(details.instagram)}</li>
+      <li><strong>Opening Hours:</strong> ${getHtmlValue(details.openingHours)}</li>
+      <li><strong>Wheelchair Access:</strong> ${getHtmlValue(details.wheelchair)}</li>
+      <li><strong>Notes:</strong> ${getHtmlValue(details.notes)}</li>
+    </ul>
+    <h4>Bitcoin Acceptance</h4>
+    <ul>
+      <li><strong>Methods:</strong> ${getHtmlValue(bitcoin.methods)}</li>
+      <li><strong>Lightning Operator:</strong> ${getHtmlValue(bitcoin.lightningOperator)}</li>
+      <li><strong>Acceptance Locations:</strong> ${getHtmlValue(bitcoin.acceptance)}</li>
+    </ul>
+  `.trim();
+
+  const subject = `New submission added: ${details.businessName}`;
+
+  return { subject, textBody, htmlBody };
+};
+
+async function sendSubmissionNotification(payload: SubmissionNotificationPayload) {
+  if (!env.mailjetApiKey || !env.mailjetApiSecret) {
+    console.warn("Mailjet credentials not configured; skipping submission notification email");
+    return;
+  }
+
+  const mailjet = new Mailjet({
+    apiKey: env.mailjetApiKey,
+    apiSecret: env.mailjetApiSecret,
+  });
+
+  const { subject, textBody, htmlBody } = buildSubmissionEmailContent(payload);
+
+  await mailjet.post("send", { version: "v3.1" }).request({
+    Messages: [
+      {
+        From: {
+          Email: env.mailjetFromEmail || "noreply@bitcoinmerchants.com.au",
+          Name: "Aussie Bitcoin Merchants",
+        },
+        To: [
+          {
+            Email: INFO_EMAIL,
+            Name: "Aussie Bitcoin Merchants",
+          },
+        ],
+        Subject: subject,
+        TextPart: textBody,
+        HTMLPart: htmlBody,
+      },
+    ],
+  });
+}
 
 const formatWebsiteForOsm = (value?: string | null) => {
   if (value === null || value === undefined) return undefined;
@@ -190,6 +428,28 @@ export async function POST(request: NextRequest) {
       );
     }
     const normalizedWebsite = formattedWebsite ?? undefined;
+    const submissionEmailDetails: SubmissionEmailDetails = {
+      businessName,
+      description,
+      category,
+      housenumber,
+      street,
+      suburb,
+      postcode,
+      state,
+      city,
+      latitude,
+      longitude,
+      phone,
+      website: normalizedWebsite,
+      email,
+      facebook,
+      instagram,
+      openingHours,
+      wheelchair,
+      notes,
+      bitcoinDetails,
+    };
 
     // Check for duplicates
     let isDuplicate = false;
@@ -421,11 +681,24 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      const osmNodeUrl = `https://www.openstreetmap.org/node/${osmNodeId}`;
+
+      try {
+        await sendSubmissionNotification({
+          submissionId: submission.id,
+          osmNodeId,
+          osmNodeUrl,
+          details: submissionEmailDetails,
+        });
+      } catch (emailError) {
+        console.error("Submission notification email error:", emailError);
+      }
+
       return NextResponse.json({
         success: true,
         submissionId: submission.id,
         osmNodeId,
-        osmNodeUrl: `https://www.openstreetmap.org/node/${osmNodeId}`,
+        osmNodeUrl,
         message: "Business successfully added to OpenStreetMap!",
       });
     } catch (osmError: any) {
