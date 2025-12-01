@@ -90,8 +90,20 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+type SelectedPlace = {
+  name: string;
+  address: string;
+  addressComponents?: {
+    street?: string;
+    suburb?: string;
+    city?: string;
+    state?: string;
+    postcode?: string;
+  };
+};
+
 export default function SubmitPage() {
-  const [selectedPlace, setSelectedPlace] = useState<{ name: string; address: string } | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodingAttribution, setGeocodingAttribution] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -110,6 +122,7 @@ export default function SubmitPage() {
     handleSubmit,
     setValue,
     watch,
+    getValues,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -253,32 +266,95 @@ export default function SubmitPage() {
     return { houseNumber: "", street: trimmed };
   };
 
-  const handlePlaceSelect = async (place: { name: string; address: string; addressComponents?: any }) => {
-    setSelectedPlace(place);
-    setValue("businessName", place.name);
+  type AddressField = keyof Pick<FormData, "street" | "housenumber" | "suburb" | "postcode" | "state" | "city">;
 
-    // First, populate address fields from Google Places components (if available)
-    if (place.addressComponents) {
-      if (place.addressComponents.street?.trim()) {
-        const parsed = parseStreetAddress(place.addressComponents.street.trim());
-        if (parsed.houseNumber) {
-          setValue("housenumber", parsed.houseNumber);
-        }
-        setValue("street", parsed.street);
-      }
-      if (place.addressComponents.suburb) {
-        setValue("suburb", place.addressComponents.suburb);
-      }
-      if (place.addressComponents.city) {
-        setValue("city", place.addressComponents.city);
-      }
-      if (place.addressComponents.state) {
-        setValue("state", place.addressComponents.state);
-      }
-      if (place.addressComponents.postcode) {
-        setValue("postcode", place.addressComponents.postcode);
+  const fillTextFieldIfEmpty = (field: AddressField, value?: string | null) => {
+    const trimmed = typeof value === "string" ? value.trim() : value;
+    if (!trimmed) {
+      return;
+    }
+
+    const currentValue = getValues(field);
+    if (typeof currentValue === "string" && currentValue.trim()) {
+      return;
+    }
+
+    setValue(field, trimmed, { shouldDirty: true, shouldTouch: true });
+  };
+
+  const fillAddressFromComponents = (components?: SelectedPlace["addressComponents"]) => {
+    if (!components) return;
+
+    if (components.street?.trim()) {
+      const parsed = parseStreetAddress(components.street.trim());
+      fillTextFieldIfEmpty("housenumber", parsed.houseNumber);
+      fillTextFieldIfEmpty("street", parsed.street || components.street.trim());
+    }
+
+    fillTextFieldIfEmpty("suburb", components.suburb);
+    fillTextFieldIfEmpty("city", components.city || components.suburb);
+    fillTextFieldIfEmpty("state", components.state);
+    fillTextFieldIfEmpty("postcode", components.postcode);
+  };
+
+  const fillAddressFromFormattedAddress = (address?: string) => {
+    if (!address) return;
+
+    const sanitized = address.replace(/\n/g, ", ");
+    const parts = sanitized
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (!parts.length) return;
+
+    const [streetCandidate, ...restParts] = parts;
+
+    if (streetCandidate) {
+      const parsed = parseStreetAddress(streetCandidate);
+      fillTextFieldIfEmpty("housenumber", parsed.houseNumber);
+      fillTextFieldIfEmpty("street", parsed.street || streetCandidate);
+    }
+
+    const filteredRest = restParts.filter((part) => !/^australia$/i.test(part));
+    const remainder = filteredRest.join(", ").trim();
+
+    if (!remainder) return;
+
+    const suburbStatePostcodeMatch = remainder.match(/^(.+?)\s+(ACT|NSW|NT|QLD|SA|TAS|VIC|WA)\s+(\d{4})/i);
+    if (suburbStatePostcodeMatch) {
+      fillTextFieldIfEmpty("suburb", suburbStatePostcodeMatch[1]);
+      fillTextFieldIfEmpty("city", suburbStatePostcodeMatch[1]);
+      fillTextFieldIfEmpty("state", suburbStatePostcodeMatch[2].toUpperCase());
+      fillTextFieldIfEmpty("postcode", suburbStatePostcodeMatch[3]);
+      return;
+    }
+
+    const suburbStateMatch = remainder.match(/^(.+?)\s+(ACT|NSW|NT|QLD|SA|TAS|VIC|WA)\b/i);
+    if (suburbStateMatch) {
+      fillTextFieldIfEmpty("suburb", suburbStateMatch[1]);
+      fillTextFieldIfEmpty("city", suburbStateMatch[1]);
+      fillTextFieldIfEmpty("state", suburbStateMatch[2].toUpperCase());
+    } else if (filteredRest.length > 0) {
+      const fallbackLocality = filteredRest[0];
+      if (!/\b(ACT|NSW|NT|QLD|SA|TAS|VIC|WA)\b/i.test(fallbackLocality)) {
+        fillTextFieldIfEmpty("suburb", fallbackLocality);
+        fillTextFieldIfEmpty("city", fallbackLocality);
       }
     }
+
+    const postcodeMatch = remainder.match(/\b\d{4}\b/);
+    if (postcodeMatch) {
+      fillTextFieldIfEmpty("postcode", postcodeMatch[0]);
+    }
+  };
+
+  const handlePlaceSelect = async (place: SelectedPlace) => {
+    setSelectedPlace(place);
+    setValue("businessName", place.name, { shouldDirty: true, shouldTouch: true });
+
+    fillAddressFromComponents(place.addressComponents);
+    fillAddressFromFormattedAddress(place.address);
 
     // Then geocode the address to get OSM-licensed coordinates
     // Note: This is non-blocking - if geocoding fails, user can still submit
@@ -294,8 +370,8 @@ export default function SubmitPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setValue("latitude", data.latitude);
-        setValue("longitude", data.longitude);
+        setValue("latitude", data.latitude, { shouldDirty: true });
+        setValue("longitude", data.longitude, { shouldDirty: true });
         
         // Store attribution for display
         if (data.attribution) {
@@ -304,25 +380,15 @@ export default function SubmitPage() {
         
         // Use Nominatim address components if Google Places didn't provide them
         if (data.address) {
-          if (!place.addressComponents?.street && data.address.street) {
+          if (data.address.street) {
             const parsed = parseStreetAddress(data.address.street);
-            if (parsed.houseNumber) {
-              setValue("housenumber", parsed.houseNumber);
-            }
-            setValue("street", parsed.street);
+            fillTextFieldIfEmpty("housenumber", parsed.houseNumber);
+            fillTextFieldIfEmpty("street", parsed.street || data.address.street);
           }
-          if (!place.addressComponents?.suburb && data.address.suburb) {
-            setValue("suburb", data.address.suburb);
-          }
-          if (!place.addressComponents?.postcode && data.address.postcode) {
-            setValue("postcode", data.address.postcode);
-          }
-          if (!place.addressComponents?.state && data.address.state) {
-            setValue("state", data.address.state);
-          }
-          if (!place.addressComponents?.city && data.address.city) {
-            setValue("city", data.address.city);
-          }
+          fillTextFieldIfEmpty("suburb", data.address.suburb);
+          fillTextFieldIfEmpty("postcode", data.address.postcode);
+          fillTextFieldIfEmpty("state", data.address.state);
+          fillTextFieldIfEmpty("city", data.address.city);
         }
       } else {
         // Geocoding failed, but it's non-critical - continue without coordinates
