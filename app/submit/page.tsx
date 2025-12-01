@@ -5,7 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import BusinessSearch from "@/components/BusinessSearch";
+import type { MapPickerProps } from "@/components/MapPicker";
 import OpeningHoursInput from "@/components/OpeningHoursInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,10 +92,24 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+const MapPicker = dynamic<MapPickerProps>(
+  () => import("@/components/MapPicker"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-80 w-full items-center justify-center rounded-lg border border-input bg-neutral-light text-sm text-neutral-dark">
+        Loading map...
+      </div>
+    ),
+  }
+);
+
 export default function SubmitPage() {
   const [selectedPlace, setSelectedPlace] = useState<{ name: string; address: string } | null>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodingAttribution, setGeocodingAttribution] = useState<string | null>(null);
+  const [manualGeocodeError, setManualGeocodeError] = useState<string | null>(null);
+  const [geocodingSource, setGeocodingSource] = useState<"search" | "address" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<any>(null);
@@ -110,6 +126,7 @@ export default function SubmitPage() {
     handleSubmit,
     setValue,
     watch,
+    getValues,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -125,6 +142,9 @@ export default function SubmitPage() {
       licenseAgreement: false,
     },
   });
+
+  const latitudeValue = watch("latitude");
+  const longitudeValue = watch("longitude");
 
   // Wait for ALTCHA custom element to be defined
   useEffect(() => {
@@ -256,6 +276,7 @@ export default function SubmitPage() {
   const handlePlaceSelect = async (place: { name: string; address: string; addressComponents?: any }) => {
     setSelectedPlace(place);
     setValue("businessName", place.name);
+    setManualGeocodeError(null);
 
     // First, populate address fields from Google Places components (if available)
     if (place.addressComponents) {
@@ -284,6 +305,7 @@ export default function SubmitPage() {
     // Note: This is non-blocking - if geocoding fails, user can still submit
     // Rate limiting is now handled in the API route
     setGeocoding(true);
+    setGeocodingSource("search");
     setGeocodingAttribution(null);
     try {
       const response = await fetch("/api/geocode", {
@@ -294,8 +316,8 @@ export default function SubmitPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setValue("latitude", data.latitude);
-        setValue("longitude", data.longitude);
+        setValue("latitude", data.latitude, { shouldDirty: true });
+        setValue("longitude", data.longitude, { shouldDirty: true });
         
         // Store attribution for display
         if (data.attribution) {
@@ -331,6 +353,83 @@ export default function SubmitPage() {
       // Geocoding error is non-critical - continue without coordinates
     } finally {
       setGeocoding(false);
+      setGeocodingSource(null);
+    }
+  };
+
+  const handleAddressGeocode = async () => {
+    const currentValues = getValues();
+    const addressParts = [
+      currentValues.housenumber,
+      currentValues.street,
+      currentValues.suburb,
+      currentValues.city,
+      currentValues.state,
+      currentValues.postcode,
+    ]
+      .map((part) => part?.trim())
+      .filter(Boolean);
+
+    if (addressParts.length < 2) {
+      setManualGeocodeError("Please include at least the street and city/state before locating on the map.");
+      return;
+    }
+
+    setManualGeocodeError(null);
+    setGeocoding(true);
+    setGeocodingSource("address");
+    setGeocodingAttribution(null);
+
+    try {
+      const response = await fetch("/api/geocode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: addressParts.join(", ") }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to locate that address right now.");
+      }
+
+      if (typeof data.latitude === "number" && typeof data.longitude === "number") {
+        setValue("latitude", data.latitude, { shouldDirty: true });
+        setValue("longitude", data.longitude, { shouldDirty: true });
+      } else {
+        setManualGeocodeError("The geocoder did not return coordinates. Try dropping a pin manually.");
+      }
+
+      if (data.attribution) {
+        setGeocodingAttribution(data.attribution);
+      }
+
+      if (data.address) {
+        if (!currentValues.street && data.address.street) {
+          const parsed = parseStreetAddress(data.address.street);
+          if (parsed.houseNumber && !currentValues.housenumber) {
+            setValue("housenumber", parsed.houseNumber);
+          }
+          setValue("street", parsed.street);
+        }
+        if (!currentValues.suburb && data.address.suburb) {
+          setValue("suburb", data.address.suburb);
+        }
+        if (!currentValues.postcode && data.address.postcode) {
+          setValue("postcode", data.address.postcode);
+        }
+        if (!currentValues.state && data.address.state) {
+          setValue("state", data.address.state);
+        }
+        if (!currentValues.city && data.address.city) {
+          setValue("city", data.address.city);
+        }
+      }
+    } catch (error: any) {
+      setManualGeocodeError(error.message || "Unable to locate that address. Please adjust the details or drop a pin on the map.");
+    } finally {
+      setGeocoding(false);
+      setGeocodingSource(null);
     }
   };
 
@@ -651,15 +750,10 @@ export default function SubmitPage() {
           <div>
             <Label htmlFor="search">Search for your business (optional)</Label>
             <BusinessSearch onPlaceSelect={handlePlaceSelect} />
-            {geocoding && (
+            {geocoding && geocodingSource === "search" && (
               <p className="text-sm text-neutral-dark mt-2">
                 <Loader2 className="inline h-4 w-4 animate-spin mr-2" />
                 Geocoding address...
-              </p>
-            )}
-            {geocodingAttribution && !geocoding && (
-              <p className="text-xs text-neutral-dark mt-2 italic">
-                {geocodingAttribution}
               </p>
             )}
           </div>
@@ -758,6 +852,71 @@ export default function SubmitPage() {
                 <Input id="city" {...register("city")} />
               </div>
             </div>
+          </div>
+
+          {/* Map Location */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-semibold">Map Location</h2>
+              <p className="text-sm text-neutral-dark mt-1">
+                Drop the pin on the OpenStreetMap view or use the button below to geocode your typed address.
+              </p>
+            </div>
+            <MapPicker
+              latitude={latitudeValue}
+              longitude={longitudeValue}
+              onLocationChange={({ lat, lng }) => {
+                setValue("latitude", lat, { shouldDirty: true });
+                setValue("longitude", lng, { shouldDirty: true });
+                setManualGeocodeError(null);
+                setGeocodingAttribution("Location selected on the map (OpenStreetMap)");
+              }}
+            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="latitude">Latitude</Label>
+                <Input
+                  id="latitude"
+                  value={typeof latitudeValue === "number" ? latitudeValue.toFixed(6) : ""}
+                  readOnly
+                  placeholder="Set via map or address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="longitude">Longitude</Label>
+                <Input
+                  id="longitude"
+                  value={typeof longitudeValue === "number" ? longitudeValue.toFixed(6) : ""}
+                  readOnly
+                  placeholder="Set via map or address"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddressGeocode}
+                disabled={geocoding && geocodingSource === "address"}
+                className="w-full sm:w-auto"
+              >
+                {geocoding && geocodingSource === "address" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Locating...
+                  </>
+                ) : (
+                  "Locate using typed address"
+                )}
+              </Button>
+              <p className="text-sm text-neutral-dark">
+                Prefer typing? We will send the address fields above to our OpenStreetMap geocoder.
+              </p>
+            </div>
+            {manualGeocodeError && <p className="text-sm text-red-500">{manualGeocodeError}</p>}
+            {geocodingAttribution && !geocoding && (
+              <p className="text-xs text-neutral-dark italic">{geocodingAttribution}</p>
+            )}
           </div>
 
           {/* Bitcoin Acceptance */}
