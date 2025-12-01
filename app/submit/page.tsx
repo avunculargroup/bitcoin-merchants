@@ -316,36 +316,62 @@ export default function SubmitPage() {
       fillTextFieldIfEmpty("street", parsed.street || streetCandidate);
     }
 
-    const filteredRest = restParts.filter((part) => !/^australia$/i.test(part));
-    const remainder = filteredRest.join(", ").trim();
+    const filteredRest = restParts
+      .map((part) => part.trim())
+      .filter((part) => part && !/^australia$/i.test(part));
 
-    if (!remainder) return;
+    if (!filteredRest.length) return;
 
-    const suburbStatePostcodeMatch = remainder.match(/^(.+?)\s+(ACT|NSW|NT|QLD|SA|TAS|VIC|WA)\s+(\d{4})/i);
-    if (suburbStatePostcodeMatch) {
-      fillTextFieldIfEmpty("suburb", suburbStatePostcodeMatch[1]);
-      fillTextFieldIfEmpty("city", suburbStatePostcodeMatch[1]);
-      fillTextFieldIfEmpty("state", suburbStatePostcodeMatch[2].toUpperCase());
-      fillTextFieldIfEmpty("postcode", suburbStatePostcodeMatch[3]);
-      return;
-    }
+    const stateRegex = /\b(ACT|NSW|NT|QLD|SA|TAS|VIC|WA)\b/i;
+    const postcodeRegex = /\b\d{4}\b/;
 
-    const suburbStateMatch = remainder.match(/^(.+?)\s+(ACT|NSW|NT|QLD|SA|TAS|VIC|WA)\b/i);
-    if (suburbStateMatch) {
-      fillTextFieldIfEmpty("suburb", suburbStateMatch[1]);
-      fillTextFieldIfEmpty("city", suburbStateMatch[1]);
-      fillTextFieldIfEmpty("state", suburbStateMatch[2].toUpperCase());
-    } else if (filteredRest.length > 0) {
-      const fallbackLocality = filteredRest[0];
-      if (!/\b(ACT|NSW|NT|QLD|SA|TAS|VIC|WA)\b/i.test(fallbackLocality)) {
-        fillTextFieldIfEmpty("suburb", fallbackLocality);
-        fillTextFieldIfEmpty("city", fallbackLocality);
+    let parsedState: string | undefined;
+    let parsedPostcode: string | undefined;
+    let parsedLocality: string | undefined;
+
+    for (let i = filteredRest.length - 1; i >= 0; i--) {
+      let segment = filteredRest[i];
+      if (!segment) continue;
+
+      if (!parsedPostcode) {
+        const postcodeMatch = segment.match(postcodeRegex);
+        if (postcodeMatch) {
+          parsedPostcode = postcodeMatch[0];
+          segment = segment.replace(postcodeMatch[0], "").trim();
+        }
+      }
+
+      if (!parsedState) {
+        const stateMatch = segment.match(stateRegex);
+        if (stateMatch) {
+          parsedState = stateMatch[1].toUpperCase();
+          segment = segment.replace(stateRegex, "").trim();
+        }
+      }
+
+      const cleanedSegment = segment.replace(/^[,]/, "").trim();
+      if (!parsedLocality && cleanedSegment) {
+        parsedLocality = cleanedSegment;
+        break;
       }
     }
 
-    const postcodeMatch = remainder.match(/\b\d{4}\b/);
-    if (postcodeMatch) {
-      fillTextFieldIfEmpty("postcode", postcodeMatch[0]);
+    if (!parsedLocality) {
+      const lastSegment = filteredRest[filteredRest.length - 1];
+      if (lastSegment && !stateRegex.test(lastSegment)) {
+        parsedLocality = lastSegment;
+      }
+    }
+
+    if (parsedLocality) {
+      fillTextFieldIfEmpty("suburb", parsedLocality);
+      fillTextFieldIfEmpty("city", parsedLocality);
+    }
+    if (parsedState) {
+      fillTextFieldIfEmpty("state", parsedState);
+    }
+    if (parsedPostcode) {
+      fillTextFieldIfEmpty("postcode", parsedPostcode);
     }
   };
 
