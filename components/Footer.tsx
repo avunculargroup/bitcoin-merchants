@@ -108,7 +108,7 @@ export default function Footer() {
               >
                 bitcoinmerchantcommunity.org
               </Link>{" "}
-              initiative, which helped shape the vision for helping merchants embrace bitcoin.
+              initiative, which helped shape the vision for helping Aussie retailers embrace bitcoin.
             </p>
           </div>
         </div>
