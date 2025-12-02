@@ -77,6 +77,41 @@ export default function Footer() {
             </ul>
           </div>
         </div>
+        <div className="mt-10 rounded-xl border border-neutral-dark/10 bg-white/80 p-6 text-center shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-dark/70">
+            Inspired by Spiral
+          </p>
+          <div className="mt-4 flex flex-col items-center gap-4 md:flex-row md:justify-center">
+            <Image
+              src="/images/spiral-logo.svg"
+              alt="Spiral"
+              width={96}
+              height={96}
+              className="h-16 w-auto drop-shadow-sm"
+            />
+            <p className="max-w-2xl text-sm text-neutral-dark md:text-left">
+              A heartfelt thank you to{" "}
+              <Link
+                href="https://spiral.xyz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-primary"
+              >
+                Spiral
+              </Link>{" "}
+              for inspiring this project through their{" "}
+              <Link
+                href="https://bitcoinmerchantcommunity.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-primary"
+              >
+                bitcoinmerchantcommunity.org
+              </Link>{" "}
+              initiative, which helped shape the vision for helping Aussie retailers embrace bitcoin.
+            </p>
+          </div>
+        </div>
         <div className="mt-8 pt-8 border-t text-center text-sm text-neutral-dark">
           <p>Built on open data (OpenStreetMap)</p>
           <p className="mt-1 text-xs">Geocoding powered by OpenStreetMap Nominatim</p>
