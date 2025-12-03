@@ -1,8 +1,56 @@
+import type { Metadata } from "next";
+import { env } from "@/lib/env";
 import Link from "next/link";
+import Breadcrumbs from "@/components/Breadcrumbs";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const baseUrl = env.appUrl;
+  const pathname = "/resources";
+  
+  return {
+    title: "Resources - Bitcoin & OpenStreetMap Guide | Aussie Bitcoin Merchants",
+    description: "Learn about Bitcoin, Lightning Network, OpenStreetMap, and BTCMap. Resources for Australian businesses accepting Bitcoin payments.",
+    alternates: {
+      canonical: `${baseUrl}${pathname}`,
+      languages: {
+        'en-AU': `${baseUrl}${pathname}`,
+      },
+    },
+    openGraph: {
+      title: "Resources - Bitcoin & OpenStreetMap Guide | Aussie Bitcoin Merchants",
+      description: "Learn about Bitcoin, Lightning Network, OpenStreetMap, and BTCMap. Resources for Australian businesses accepting Bitcoin payments.",
+      url: `${baseUrl}${pathname}`,
+      siteName: "Aussie Bitcoin Merchants",
+      images: [
+        {
+          url: `${baseUrl}/images/og.png`,
+          width: 1200,
+          height: 630,
+          alt: "Aussie Bitcoin Merchants",
+        },
+      ],
+      locale: "en_AU",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Resources - Bitcoin & OpenStreetMap Guide | Aussie Bitcoin Merchants",
+      description: "Learn about Bitcoin, Lightning Network, OpenStreetMap, and BTCMap. Resources for Australian businesses accepting Bitcoin payments.",
+      images: [`${baseUrl}/images/og.png`],
+    },
+  };
+}
 
 export default function ResourcesPage() {
   return (
-    <div className="container py-20">
+    <div>
+      <Breadcrumbs
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Resources", href: "/resources" },
+        ]}
+      />
+      <div className="container py-20">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-8">Resources</h1>
 
@@ -59,6 +107,7 @@ export default function ResourcesPage() {
             <li>Train your staff on how to process Bitcoin payments</li>
           </ul>
         </section>
+      </div>
       </div>
     </div>
   );

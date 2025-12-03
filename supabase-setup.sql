@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS submissions (
     wheelchair VARCHAR(50),
     notes TEXT,
     user_email VARCHAR(255),
+    duplicate_osm_id BIGINT,
+    duplicate_osm_type VARCHAR(50),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -158,4 +160,69 @@ COMMENT ON TABLE testimonials IS 'User testimonials for the platform';
 COMMENT ON TABLE newsletter_subscriptions IS 'Newsletter subscription list';
 COMMENT ON TABLE geocoding_cache IS 'Cached geocoding results from Nominatim to comply with usage policy';
 COMMENT ON TABLE geocoding_rate_limit IS 'Global rate limit tracking for Nominatim API requests (1 req/sec)';
+
+-- Enable Row Level Security on all tables
+-- This prevents public access via PostgREST while allowing direct database connections via Prisma
+ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE osm_nodes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE email_verifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE geocoding_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE geocoding_rate_limit ENABLE ROW LEVEL SECURITY;
+ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE testimonials ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Deny all public access" ON submissions;
+DROP POLICY IF EXISTS "Deny all public access" ON osm_nodes;
+DROP POLICY IF EXISTS "Deny all public access" ON admin_users;
+DROP POLICY IF EXISTS "Deny all public access" ON email_verifications;
+DROP POLICY IF EXISTS "Deny all public access" ON geocoding_cache;
+DROP POLICY IF EXISTS "Deny all public access" ON geocoding_rate_limit;
+DROP POLICY IF EXISTS "Deny all public access" ON newsletter_subscriptions;
+DROP POLICY IF EXISTS "Deny all public access" ON testimonials;
+
+-- Create policies that deny all public access via PostgREST
+-- Since the app uses direct database connections via Prisma, 
+-- these policies will block PostgREST access but won't affect the application
+
+-- Submissions: No public access via PostgREST
+CREATE POLICY "Deny all public access" ON submissions
+  FOR ALL
+  USING (false);
+
+-- OSM Nodes: No public access via PostgREST
+CREATE POLICY "Deny all public access" ON osm_nodes
+  FOR ALL
+  USING (false);
+
+-- Admin Users: No public access via PostgREST
+CREATE POLICY "Deny all public access" ON admin_users
+  FOR ALL
+  USING (false);
+
+-- Email Verifications: No public access via PostgREST
+CREATE POLICY "Deny all public access" ON email_verifications
+  FOR ALL
+  USING (false);
+
+-- Geocoding Cache: No public access via PostgREST
+CREATE POLICY "Deny all public access" ON geocoding_cache
+  FOR ALL
+  USING (false);
+
+-- Geocoding Rate Limit: No public access via PostgREST
+CREATE POLICY "Deny all public access" ON geocoding_rate_limit
+  FOR ALL
+  USING (false);
+
+-- Newsletter Subscriptions: No public access via PostgREST
+CREATE POLICY "Deny all public access" ON newsletter_subscriptions
+  FOR ALL
+  USING (false);
+
+-- Testimonials: No public access via PostgREST
+CREATE POLICY "Deny all public access" ON testimonials
+  FOR ALL
+  USING (false);
 

@@ -1,8 +1,56 @@
+import type { Metadata } from "next";
+import { env } from "@/lib/env";
 import Link from "next/link";
+import Breadcrumbs from "@/components/Breadcrumbs";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const baseUrl = env.appUrl;
+  const pathname = "/privacy";
+  
+  return {
+    title: "Privacy Policy - Aussie Bitcoin Merchants | Data Protection",
+    description: "Privacy policy for Aussie Bitcoin Merchants. Learn how we collect, use, and protect your business information and personal data.",
+    alternates: {
+      canonical: `${baseUrl}${pathname}`,
+      languages: {
+        'en-AU': `${baseUrl}${pathname}`,
+      },
+    },
+    openGraph: {
+      title: "Privacy Policy - Aussie Bitcoin Merchants | Data Protection",
+      description: "Privacy policy for Aussie Bitcoin Merchants. Learn how we collect, use, and protect your business information and personal data.",
+      url: `${baseUrl}${pathname}`,
+      siteName: "Aussie Bitcoin Merchants",
+      images: [
+        {
+          url: `${baseUrl}/images/og.png`,
+          width: 1200,
+          height: 630,
+          alt: "Aussie Bitcoin Merchants",
+        },
+      ],
+      locale: "en_AU",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Privacy Policy - Aussie Bitcoin Merchants | Data Protection",
+      description: "Privacy policy for Aussie Bitcoin Merchants. Learn how we collect, use, and protect your business information and personal data.",
+      images: [`${baseUrl}/images/og.png`],
+    },
+  };
+}
 
 export default function PrivacyPage() {
   return (
-    <div className="container py-20">
+    <div>
+      <Breadcrumbs
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Privacy Policy", href: "/privacy" },
+        ]}
+      />
+      <div className="container py-20">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
 
@@ -86,6 +134,7 @@ export default function PrivacyPage() {
             Last updated: {new Date().toLocaleDateString()}
           </p>
         </section>
+      </div>
       </div>
     </div>
   );

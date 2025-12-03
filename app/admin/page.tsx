@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>("pending");
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {

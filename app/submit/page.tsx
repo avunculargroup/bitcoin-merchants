@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
+import { env } from "@/lib/env";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import BusinessSearch from "@/components/BusinessSearch";
 import OpeningHoursInput from "@/components/OpeningHoursInput";
 import { Button } from "@/components/ui/button";
@@ -442,11 +444,6 @@ export default function SubmitPage() {
 
       if (response.ok && result.success) {
         setSubmitSuccess(result);
-      } else if (result.duplicate) {
-        // Handle duplicate case specifically
-        setSubmitError(
-          "A similar business already exists at this location. If you would like to update it, email us with the details at info@bitcoinmerchants.com.au"
-        );
       } else {
         // Show more detailed error message
         const errorMessage = result.error || result.message || result.details || "Failed to submit. Please try again or contact support if the problem persists.";
@@ -463,24 +460,16 @@ export default function SubmitPage() {
     return (
       <div className="container py-20">
         <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-3xl font-bold mb-4 text-secondary">Success!</h1>
+          <h1 className="text-3xl font-bold mb-4 text-secondary">Submission Received!</h1>
           <p className="text-lg mb-6">{submitSuccess.message}</p>
-          {submitSuccess.osmNodeUrl && (
-            <div className="bg-neutral-light p-6 rounded-lg mb-6">
-              <p className="mb-2">Your business has been added/updated on OpenStreetMap:</p>
-              <a
-                href={submitSuccess.osmNodeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                {submitSuccess.osmNodeUrl}
-              </a>
-            </div>
-          )}
-          <p className="text-neutral-dark mb-6">
-            Your listing will appear on <Link href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap</Link> and other Bitcoin maps once the data has propagated (usually within a few hours).
-          </p>
+          <div className="bg-neutral-light p-6 rounded-lg mb-6 text-left">
+            <h3 className="font-semibold mb-2">What happens next?</h3>
+            <ul className="list-disc list-inside space-y-2 text-neutral-dark">
+              <li>Your submission will be reviewed by our team (usually within 4 business hours).</li>
+              <li>Once approved, it will be published to OpenStreetMap.</li>
+              <li>After publication, it will soon appear on <a href="https://btcmap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BTCMap.org</a> and other apps.</li>
+            </ul>
+          </div>
           <Button asChild>
             <a href="/map">Return Home</a>
           </Button>
@@ -489,8 +478,42 @@ export default function SubmitPage() {
     );
   }
 
+  const baseUrl = env.appUrl;
+  
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "Business Registration Service",
+    "description": "Free service to register Australian businesses accepting Bitcoin payments on OpenStreetMap and BTCMap",
+    "provider": {
+      "@type": "Organization",
+      "name": "Aussie Bitcoin Merchants",
+      "url": baseUrl,
+    },
+    "areaServed": {
+      "@type": "Country",
+      "name": "Australia",
+    },
+    "serviceType": "Business Listing",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "AUD",
+    },
+  };
+
   return (
     <>
+      <Breadcrumbs
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Add Your Business", href: "/submit" },
+        ]}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
+      />
       {/* Review Modal */}
       {showReviewModal && reviewData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">

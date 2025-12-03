@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,8 +61,15 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBFB]">
-      <div className="container py-12 md:py-20">
+    <div>
+      <Breadcrumbs
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Contact", href: "/contact" },
+        ]}
+      />
+      <div className="min-h-screen bg-[#FDFBFB]">
+        <div className="container py-12 md:py-20">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-4xl font-bold mb-8">Contact Us</h1>
           <p className="text-lg text-neutral-dark mb-8">
@@ -140,6 +148,7 @@ export default function ContactPage() {
               )}
             </Button>
           </form>
+        </div>
         </div>
       </div>
     </div>

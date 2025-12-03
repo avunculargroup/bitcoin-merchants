@@ -31,6 +31,7 @@ export async function GET(
     // Convert BigInt to string for JSON serialization
     const serialized = {
       ...submission,
+      duplicateOsmId: submission.duplicateOsmId?.toString(),
       osmNodes: submission.osmNodes.map((node) => ({
         ...node,
         osmId: node.osmId.toString(),

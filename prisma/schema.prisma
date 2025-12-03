@@ -34,6 +34,8 @@ model Submission {
   wheelchair    String?
   notes         String?
   userEmail     String?  @map("user_email")
+  duplicateOsmId BigInt?  @map("duplicate_osm_id")
+  duplicateOsmType String? @map("duplicate_osm_type") // "node" or "way"
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
