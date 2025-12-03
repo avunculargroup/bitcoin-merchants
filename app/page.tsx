@@ -14,9 +14,9 @@ export default function Home() {
       <HomeHero />
       <WhyBitcoin />
       <GetOnMap />
-      <MeetTeamCard />
       <SquareSection />
       <POSOptions />
+      <MeetTeamCard />
       <OnlinePayment />
       <ContactSupportCard />
       <HomeFAQ />
