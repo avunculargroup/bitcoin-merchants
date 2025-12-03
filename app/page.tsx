@@ -1,6 +1,7 @@
 import HomeHero from "@/components/HomeHero";
 import WhyBitcoin from "@/components/WhyBitcoin";
 import GetOnMap from "@/components/GetOnMap";
+import MeetTeamCard from "@/components/MeetTeamCard";
 import SquareSection from "@/components/SquareSection";
 import POSOptions from "@/components/POSOptions";
 import OnlinePayment from "@/components/OnlinePayment";
@@ -13,6 +14,7 @@ export default function Home() {
       <HomeHero />
       <WhyBitcoin />
       <GetOnMap />
+      <MeetTeamCard />
       <SquareSection />
       <POSOptions />
       <OnlinePayment />
