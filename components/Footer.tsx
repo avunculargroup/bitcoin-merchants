@@ -45,6 +45,11 @@ export default function Footer() {
                   Resources
                 </Link>
               </li>
+              <li>
+                <Link href="/about" className="text-neutral-dark hover:text-primary">
+                  About Us
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
