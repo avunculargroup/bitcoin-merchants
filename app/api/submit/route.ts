@@ -91,7 +91,8 @@ function buildEmailBodies(details: Record<string, unknown>) {
 
 async function sendSubmissionNotification(details: Record<string, unknown>) {
   if (!env.mailjetApiKey || !env.mailjetApiSecret) {
-    throw new Error("Mailjet credentials not configured");
+    console.warn("Mailjet credentials not configured; skipping submission notification email");
+    return;
   }
 
   const { textBody, htmlBody } = buildEmailBodies(details);
@@ -230,34 +231,38 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await sendSubmissionNotification({
-      "Submission ID": submission.id,
-      "Business Name": businessName,
-      Description: description,
-      Category: category,
-      Street: street,
-      "House Number": housenumber,
-      Suburb: suburb,
-      Postcode: postcode,
-      State: state,
-      City: city,
-      Latitude: latitude,
-      Longitude: longitude,
-      Phone: phone,
-      "Website (original)": website,
-      "Website (normalized)": normalizedWebsite,
-      Email: email,
-      Facebook: facebook,
-      Instagram: instagram,
-      "Bitcoin Details": bitcoinDetails || {},
-      "Opening Hours": openingHours,
-      Wheelchair: wheelchair,
-      Notes: notes,
-      "Duplicate OSM ID": duplicateOsmId,
-      "Duplicate OSM Type": duplicateOsmType,
-      "Admin Review Status": submission.status,
-      "Submitted At": new Date().toISOString(),
-    });
+    try {
+      await sendSubmissionNotification({
+        "Submission ID": submission.id,
+        "Business Name": businessName,
+        Description: description,
+        Category: category,
+        Street: street,
+        "House Number": housenumber,
+        Suburb: suburb,
+        Postcode: postcode,
+        State: state,
+        City: city,
+        Latitude: latitude,
+        Longitude: longitude,
+        Phone: phone,
+        "Website (original)": website,
+        "Website (normalized)": normalizedWebsite,
+        Email: email,
+        Facebook: facebook,
+        Instagram: instagram,
+        "Bitcoin Details": bitcoinDetails || {},
+        "Opening Hours": openingHours,
+        Wheelchair: wheelchair,
+        Notes: notes,
+        "Duplicate OSM ID": duplicateOsmId,
+        "Duplicate OSM Type": duplicateOsmType,
+        "Admin Review Status": submission.status,
+        "Submitted At": new Date().toISOString(),
+      });
+    } catch (emailError) {
+      console.error("Failed to send submission notification email:", emailError);
+    }
 
     return NextResponse.json({
       success: true,
