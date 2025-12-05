@@ -12,14 +12,52 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('../../lib/env', () => ({
-  env: {
-    altchaSecretKey: 'test-secret',
-  },
+const envMock = vi.hoisted(() => ({
+  altchaSecretKey: 'test-secret',
+  mailjetApiKey: 'test-mailjet-key',
+  mailjetApiSecret: 'test-mailjet-secret',
+  mailjetFromEmail: 'noreply@example.com',
+}));
+
+vi.mock('@/lib/env', () => ({
+  env: envMock,
 }));
 
 vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn(() => true), // Always allow requests in tests
+}));
+
+const {
+  mailjetRequestMock,
+  mailjetPostMock,
+  mailjetConstructorMock,
+  MailjetClass,
+} = vi.hoisted(() => {
+  const requestMock = vi.fn();
+  const postMock = vi.fn(() => ({
+    request: requestMock,
+  }));
+  const constructorMock = vi.fn();
+
+  class MockMailjet {
+    constructor(config: any) {
+      constructorMock(config);
+    }
+
+    post = postMock;
+  }
+
+  return {
+    mailjetRequestMock: requestMock,
+    mailjetPostMock: postMock,
+    mailjetConstructorMock: constructorMock,
+    MailjetClass: MockMailjet,
+  };
+});
+
+vi.mock('node-mailjet', () => ({
+  __esModule: true,
+  default: MailjetClass,
 }));
 
 global.fetch = vi.fn();
@@ -27,6 +65,22 @@ global.fetch = vi.fn();
 describe('Submission API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mailjetRequestMock.mockReset();
+    mailjetPostMock.mockReset();
+    mailjetPostMock.mockImplementation(() => ({
+      request: mailjetRequestMock,
+    }));
+    mailjetConstructorMock.mockReset();
+    mailjetConstructorMock.mockImplementation(() => ({
+      post: mailjetPostMock,
+    }));
+    envMock.mailjetApiKey = 'test-mailjet-key';
+    envMock.mailjetApiSecret = 'test-mailjet-secret';
+    envMock.mailjetFromEmail = 'noreply@example.com';
+    const fetchMock = global.fetch as any;
+    if (typeof fetchMock.mockReset === 'function') {
+      fetchMock.mockReset();
+    }
   });
 
   describe('Validation', () => {
@@ -563,6 +617,104 @@ describe('Submission API', () => {
 
       const response = await POST(request);
       expect(response.status).toBe(200);
+    });
+  });
+
+  describe('Email Notifications', () => {
+    it('should send submission details via email when configured', async () => {
+      const prismaModule = await import('@/lib/prisma');
+      (prismaModule.prisma.submission.create as any).mockResolvedValueOnce({
+        id: 'submission-email-1',
+        status: 'pending',
+      });
+
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ valid: true }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ isDuplicate: false }),
+        });
+
+      mailjetRequestMock.mockResolvedValueOnce({});
+
+      const request = new NextRequest('http://localhost/api/submit', {
+        method: 'POST',
+        body: JSON.stringify({
+          captchaToken: 'valid-token',
+          businessName: 'Email Test Business',
+          description: 'Email test description',
+          latitude: -37.8136,
+          longitude: 144.9631,
+        }),
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(mailjetConstructorMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          apiKey: 'test-mailjet-key',
+          apiSecret: 'test-mailjet-secret',
+        })
+      );
+      expect(mailjetRequestMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          Messages: expect.arrayContaining([
+            expect.objectContaining({
+              To: expect.arrayContaining([
+                expect.objectContaining({
+                  Email: 'info@bitcoinmerchants.com.au',
+                }),
+              ]),
+              Subject: expect.stringContaining('Email Test Business'),
+            }),
+          ]),
+        })
+      );
+    });
+
+    it('should log an error but continue when email sending fails', async () => {
+      const prismaModule = await import('@/lib/prisma');
+      (prismaModule.prisma.submission.create as any).mockResolvedValueOnce({
+        id: 'submission-email-2',
+        status: 'pending',
+      });
+
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ valid: true }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ isDuplicate: false }),
+        });
+
+      mailjetRequestMock.mockRejectedValueOnce(new Error('Mailjet failure'));
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const request = new NextRequest('http://localhost/api/submit', {
+        method: 'POST',
+        body: JSON.stringify({
+          captchaToken: 'valid-token',
+          businessName: 'Email Failure Business',
+          latitude: -37.8136,
+          longitude: 144.9631,
+        }),
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to send submission notification email:',
+        expect.any(Error)
+      );
+
+      consoleErrorSpy.mockRestore();
     });
   });
 });

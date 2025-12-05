@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import Mailjet from "node-mailjet";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { env } from "@/lib/env";
 
 const websiteDomainPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/i;
+const INFO_EMAIL = "info@bitcoinmerchants.com.au";
 
 type BitcoinDetails = {
   onChain?: boolean;
@@ -39,6 +42,86 @@ async function verifyCaptcha(token: string): Promise<boolean> {
   });
   const data = await response.json();
   return data.valid === true;
+}
+
+function formatValueForEmail(value: unknown): string {
+  if (value === null || value === undefined || value === "") {
+    return "N/A";
+  }
+
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function buildEmailBodies(details: Record<string, unknown>) {
+  const entries = Object.entries(details);
+  const textLines = entries.map(([key, value]) => `${key}: ${formatValueForEmail(value)}`);
+  const textBody = ["A new submission has been received.", "", ...textLines].join("\n");
+
+  const htmlSections = entries
+    .map(([key, value]) => {
+      const formatted = escapeHtml(formatValueForEmail(value)).replace(/\n/g, "<br />");
+      return `<p><strong>${key}:</strong><br />${formatted}</p>`;
+    })
+    .join("");
+
+  const htmlBody = `
+    <h3>New submission received</h3>
+    ${htmlSections}
+  `;
+
+  return { textBody, htmlBody };
+}
+
+async function sendSubmissionNotification(details: Record<string, unknown>) {
+  if (!env.mailjetApiKey || !env.mailjetApiSecret) {
+    console.warn("Mailjet credentials not configured; skipping submission notification email");
+    return;
+  }
+
+  const { textBody, htmlBody } = buildEmailBodies(details);
+  const subject = `New Submission: ${details["Business Name"] || "Unknown business"}`;
+
+  const mailjet = new Mailjet({
+    apiKey: env.mailjetApiKey,
+    apiSecret: env.mailjetApiSecret,
+  });
+
+  await mailjet.post("send", { version: "v3.1" }).request({
+    Messages: [
+      {
+        From: {
+          Email: env.mailjetFromEmail || "noreply@bitcoinmerchants.com.au",
+          Name: "Aussie Bitcoin Merchants",
+        },
+        To: [
+          {
+            Email: INFO_EMAIL,
+            Name: "Aussie Bitcoin Merchants",
+          },
+        ],
+        Subject: subject,
+        TextPart: textBody,
+        HTMLPart: htmlBody,
+      },
+    ],
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -147,6 +230,39 @@ export async function POST(request: NextRequest) {
         duplicateOsmType: duplicateOsmType || null,
       },
     });
+
+    try {
+      await sendSubmissionNotification({
+        "Submission ID": submission.id,
+        "Business Name": businessName,
+        Description: description,
+        Category: category,
+        Street: street,
+        "House Number": housenumber,
+        Suburb: suburb,
+        Postcode: postcode,
+        State: state,
+        City: city,
+        Latitude: latitude,
+        Longitude: longitude,
+        Phone: phone,
+        "Website (original)": website,
+        "Website (normalized)": normalizedWebsite,
+        Email: email,
+        Facebook: facebook,
+        Instagram: instagram,
+        "Bitcoin Details": bitcoinDetails || {},
+        "Opening Hours": openingHours,
+        Wheelchair: wheelchair,
+        Notes: notes,
+        "Duplicate OSM ID": duplicateOsmId,
+        "Duplicate OSM Type": duplicateOsmType,
+        "Admin Review Status": submission.status,
+        "Submitted At": new Date().toISOString(),
+      });
+    } catch (emailError) {
+      console.error("Failed to send submission notification email:", emailError);
+    }
 
     return NextResponse.json({
       success: true,
