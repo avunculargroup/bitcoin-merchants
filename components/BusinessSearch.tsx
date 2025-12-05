@@ -56,6 +56,7 @@ export default function BusinessSearch({ onPlaceSelect }: BusinessSearchProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const PlaceClass = useRef<PlaceConstructor | null>(null);
   const isGoogleMapsReady = useRef(false);
+  const skipNextSearch = useRef(false);
 
   useEffect(() => {
     const initializePlacesLibrary = async () => {
@@ -118,6 +119,11 @@ export default function BusinessSearch({ onPlaceSelect }: BusinessSearchProps) {
   }, []);
 
   useEffect(() => {
+    if (skipNextSearch.current) {
+      skipNextSearch.current = false;
+      return;
+    }
+
     if (!query || query.length < 3) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -195,6 +201,8 @@ export default function BusinessSearch({ onPlaceSelect }: BusinessSearchProps) {
     // Immediately hide dropdown and clear suggestions
     setShowSuggestions(false);
     setSuggestions([]);
+    setLoading(false);
+    skipNextSearch.current = true;
     
     if (!PlaceClass.current || !isGoogleMapsReady.current) {
       console.error("Places library not available");
