@@ -31,6 +31,28 @@ const normalizeWebsite = (value?: string | null) => {
   return trimmed;
 };
 
+const CounterSignIcon = ({ className = "" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 64 64"
+    role="img"
+    aria-hidden="true"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="10" y="12" width="44" height="30" rx="6" fill="currentColor" opacity="0.08" />
+    <rect x="14" y="16" width="36" height="22" rx="4" />
+    <path d="M14 44l-4 10" />
+    <path d="M50 44l4 10" />
+    <path d="M22 28h20" />
+    <path d="M26 22h12" />
+    <path d="M26 34h12" />
+  </svg>
+);
+
 const formSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
   description: z.string().optional(),
@@ -69,6 +91,7 @@ const formSchema = z.object({
   openingHours: z.string().optional(),
   wheelchair: z.string().optional(),
   notes: z.string().optional(),
+  promoSign: z.boolean().optional(),
   licenseAgreement: z.boolean().refine((val) => val === true, {
     message: "You must agree to the license terms",
   }),
@@ -124,6 +147,7 @@ export default function SubmitPage() {
       other: [],
       inStore: false,
       online: false,
+      promoSign: false,
       licenseAgreement: false,
     },
   });
@@ -403,6 +427,7 @@ export default function SubmitPage() {
       openingHours: data.openingHours || "Not provided",
       wheelchair: data.wheelchair || "Not provided",
       notes: data.notes || "Not provided",
+      wantsPromoSign: data.promoSign === true,
     };
   };
 
@@ -437,6 +462,7 @@ export default function SubmitPage() {
           housenumber: reviewData.housenumber,
           facebook: reviewData.facebook,
           instagram: reviewData.instagram,
+          promoSign: reviewData.promoSign,
         }),
       });
 
@@ -603,6 +629,12 @@ export default function SubmitPage() {
                       <div>
                         <h3 className="font-semibold text-neutral-dark mb-1">Additional Notes</h3>
                         <p className="text-neutral-dark">{formatted.notes}</p>
+                      </div>
+                    )}
+                    {formatted.wantsPromoSign && (
+                      <div>
+                        <h3 className="font-semibold text-neutral-dark mb-1">Promotions</h3>
+                        <p className="text-neutral-dark">Opted in to receive the Shop Bitcoin Australia counter top sign.</p>
                       </div>
                     )}
                   </div>
@@ -999,6 +1031,38 @@ export default function SubmitPage() {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Promotional Offer */}
+          <div className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-4 shadow-sm">
+            <div className="flex gap-4">
+              <Checkbox
+                id="promoSign"
+                checked={watch("promoSign")}
+                onCheckedChange={(checked) => setValue("promoSign", checked === true)}
+                className="mt-1 h-5 w-5 border-primary/60 data-[state=checked]:bg-primary"
+              />
+              <div className="flex gap-3">
+                <CounterSignIcon className="h-10 w-10 text-primary" />
+                <div>
+                  <label htmlFor="promoSign" className="text-base font-semibold text-primary">
+                    Limited time offer: Free counter top retail sign sent right to your address.
+                  </label>
+                  <p className="text-sm text-neutral-dark mt-1">
+                    This is a partnership with{" "}
+                    <a
+                      href="https://shopbitcoin.com.au"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium underline decoration-dotted underline-offset-2"
+                    >
+                      Shop Bitcoin Australia
+                    </a>
+                    .
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Submit Button */}
