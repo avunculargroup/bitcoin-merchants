@@ -22,10 +22,8 @@ export default function HomeHero() {
             Who needs a 3% card fee?
           </h1>
           <p className="text-xl text-neutral-dark mb-6">
-            Traditional card payments are expensive for small merchants - fees often exceed{" "}
-            <strong>1½-2%</strong> of the sale value, and transactions on foreign‑issued cards can cost{" "}
-            <strong>around 2.5%</strong>. When the median profit margin for an Australian small business is only{" "}
-            <strong>≈5%</strong> and average net margins range from <strong>7-10%</strong>, paying two percent in fees means handing over a large share of your hard‑earned profit.
+            Card payment fees of <strong>1.5-2.5%</strong> take a big bite out of small business margins that average
+            just <strong>5-10%</strong>.
           </p>
           <p className="text-lg text-neutral-dark mb-8">
             Bitcoin payments can be processed via the Lightning Network with negligible fees and no intermediaries.
