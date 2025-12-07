@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { env } from "@/lib/env";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Hero from "@/components/Hero";
+import BTCMapEmbed from "@/components/BTCMapEmbed";
 import StepByStep from "@/components/StepByStep";
 import Benefits from "@/components/Benefits";
 import TrustBadges from "@/components/TrustBadges";
@@ -101,6 +102,7 @@ export default function MapPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       <Hero />
+      <BTCMapEmbed />
       <StepByStep />
       <Benefits showTestimonials={false} />
       <TrustBadges />
