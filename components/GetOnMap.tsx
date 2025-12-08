@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function GetOnMap() {
@@ -14,8 +15,11 @@ export default function GetOnMap() {
             Get discovered by customers who want to pay with bitcoin. Adding your business to the Bitcoin map helps travellers and locals find you and shows you are part of a growing community.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" asChild>
-              <Link href="/map">Register Your Business</Link>
+            <Button size="lg" asChild className="gap-2">
+              <Link href="/map">
+                <MapPin className="h-5 w-5" />
+                <span>Get on the map</span>
+              </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href="/map">Learn More</Link>
