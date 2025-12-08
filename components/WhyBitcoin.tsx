@@ -8,19 +8,19 @@ const homepageContent = {
     features: [
       {
         title: "Instant settlement",
-        body: "Bitcoin payments over the Lightning Network settle almost instantly. Off-chain payment channels allow high-volume, low-fee transfers, so money reaches you in seconds rather than days. Payment processors like OpenNode even offer near-instant settlement and automatic conversion to local currencies.",
+        body: "Get paid in seconds with Lightning Network payments, not days. No more waiting for bank transfers to clear.",
       },
       {
         title: "No fraud or chargebacks",
-        body: "Bitcoin transactions are final. Each transaction is recorded on a public blockchain and cannot be reversed, eliminating chargebacks and the associated fraud risk. Payment processors emphasise that accepting bitcoin means saying goodbye to fraud and chargebacks.",
+        body: "Bitcoin transactions are final. Say goodbye to the cost and hassle of fraudulent chargebacks for good.",
       },
       {
         title: "Virtually no fees",
-        body: "Lightning transactions carry very low network fees, and some processors offer zero processing fees for a promotional period. For example, Square's U.S. rollout of Bitcoin payments allows merchants to accept bitcoin with no processing fees until 2027.",
+        body: "Pay mere cents per transaction with Lightning. Keep more of your sale price without high card fees.",
       },
       {
         title: "Protect your margin",
-        body: "Small businesses in Australia typically operate on slim profit margins. The median operating profit margin is only about 5%, and a 2024 benchmark shows many small businesses have net margins under 10%. Card payment fees ranging from 1.5–2% for domestic cards and around 2.5% for foreign cards can erode a third of your profit. Accepting bitcoin allows you to keep more of what you earn.",
+        body: "With average Aussie business margins around 5%, saving 2-3% on fees by accepting bitcoin makes a huge difference.",
       },
     ],
   },

@@ -9,19 +9,19 @@ Traditional card payments are expensive for small merchants - fees often exceed 
 
 ### Instant settlement
 
-Bitcoin payments over the Lightning Network settle almost instantly. Off‑chain payment channels allow high‑volume, low‑fee transfers, so money reaches you in seconds rather than days[\[5\]](https://www.lightspark.com/knowledge/how-the-lightning-network-is-transforming-bitcoin#:~:text=The%20Lightning%20Network%20is%20a,chain). Payment processors like OpenNode even offer **near‑instant settlement and automatic conversion to local currencies**.
+Get paid in seconds with Lightning Network payments, not days. No more waiting for bank transfers to clear.
 
 ### No fraud or chargebacks
 
-Bitcoin transactions are final. Each transaction is recorded on a public blockchain and **cannot be reversed**, eliminating chargebacks and the associated fraud risk[\[6\]](https://support.blockchain.com/hc/en-us/articles/211162263-Can-My-Transaction-Be-Canceled-or-Reversed#:~:text=We%20understand%20that%20mistakes%20happen%2C,initiated%2C%20it%20cannot%20be%20undone). Payment processors emphasise that accepting bitcoin means **saying goodbye to fraud and chargebacks**.
+Bitcoin transactions are final. Say goodbye to the cost and hassle of fraudulent chargebacks for good.
 
 ### Virtually no fees
 
-Lightning transactions carry very low network fees[\[5\]](https://www.lightspark.com/knowledge/how-the-lightning-network-is-transforming-bitcoin#:~:text=The%20Lightning%20Network%20is%20a,chain), and some processors offer **zero processing fees** for a promotional period. For example, Square's U.S. rollout of Bitcoin payments allows merchants to accept bitcoin with **no processing fees until 2027**[\[7\]](https://bitcoinmagazine.com/business/square-bitcoin-payments-go-live-today#:~:text=Bitcoin%20just%20took%20another%20major,no%20processing%20fees%20until%202027).
+Pay mere cents per transaction with Lightning. Keep more of your sale price without high card fees.
 
 ### Protect your margin
 
-Small businesses in Australia typically operate on slim profit margins. The **median operating profit margin is only about 5 %**[\[3\]](https://yoursmallbusinesscoach.com.au/what-is-a-reasonable-profit-margin-for-small-business/#:~:text=What%E2%80%99s%20The%20Average%20Profit%20Margin,For%20Small%20Business%20In%20Australia), and a 2024 benchmark shows many small businesses have net margins **under 10 %**[\[8\]](https://manlyfs.com.au/financial-planning-for-small-business-owners-in-australia/#:~:text=year%C2%A0and%20nearly%C2%A049.9,Bureau%20Of%20Statistics%20in%202025). Card payment fees ranging from **1.5-2 %** for domestic cards[\[1\]](https://www.rba.gov.au/payments-and-infrastructure/review-of-retail-payments-regulation/2024-10/issues-for-consultation.html#:~:text=paid%20by%20small%20merchants%20also,Graph%C2%A04) and **around 2.5 %** for foreign cards[\[2\]](https://www.rba.gov.au/payments-and-infrastructure/review-of-retail-payments-regulation/2024-10/issues-for-consultation.html#:~:text=%2A%20Transactions%20on%20foreign,6%C2%A0per%C2%A0cent) can erode a third of your profit. Accepting bitcoin allows you to keep more of what you earn.
+With average Aussie business margins around 5%, saving 2-3% on fees by accepting bitcoin makes a huge difference.
 
 ## Get on the map
 
