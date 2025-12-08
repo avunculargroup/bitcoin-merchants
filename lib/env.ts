@@ -97,6 +97,6 @@ export const env = {
   mailjetApiKey: getEnvVar('MAILJET_API_KEY', false),
   mailjetApiSecret: getEnvVar('MAILJET_API_SECRET', false),
   mailjetFromEmail: getEnvVar('MAILJET_FROM_EMAIL', false) || 'noreply@bitcoinmerchants.com.au',
-  typeformWizardEnabled: parseBoolean(process.env.NEXT_PUBLIC_TYPEFORM_WIZARD_ENABLED),
+  typeformWizardEnabled: parseBoolean(process.env.NEXT_PUBLIC_TYPEFORM_WIZARD_ENABLED ?? "true"),
 };
 
