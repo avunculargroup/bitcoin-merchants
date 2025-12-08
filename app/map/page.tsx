@@ -104,14 +104,14 @@ export default function MapPage() {
       <section className="mx-auto mt-16 mb-16 w-full max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-lg backdrop-blur">
           <h2 className="text-3xl font-semibold text-slate-900">The BTC Map</h2>
-          <p className="mt-4 text-lg text-slate-600">
+          <p className="mt-4 hidden text-lg text-slate-600 sm:block">
             BTC Map is a volunteer-run directory of Bitcoin-friendly businesses
             built entirely on open, community-maintained OpenStreetMap data, so
             anyone can discover and verify places that welcome Bitcoin without
             needing proprietary apps.
           </p>
           <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-            <div className="relative w-full pt-[70%] sm:pt-[60%] lg:pt-[45%]">
+            <div className="relative w-full h-[75vh] sm:h-auto sm:pt-[60%] lg:pt-[45%]">
               <iframe
                 id="btcmap"
                 title="BTC Map"
