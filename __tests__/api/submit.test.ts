@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Prisma } from '@prisma/client';
 import { POST } from '../../app/api/submit/route';
 import { NextRequest } from 'next/server';
 import { createMockSubmission } from '../helpers/mocks';
@@ -305,7 +306,7 @@ describe('Submission API', () => {
           data: expect.objectContaining({
             duplicateOsmId: null,
             duplicateOsmType: null,
-            duplicateMatches: null,
+            duplicateMatches: Prisma.JsonNull,
           }),
         })
       );
