@@ -11,6 +11,7 @@ A privately managed self-service onboarding portal that allows Australian busine
 - Admin dashboard for moderation
 - Privacy-first ALTCHA integration
 - Responsive design with Tailwind CSS and ShadUI
+- Planned Nostr syndication via NDK (see `NOSTR_PLAN.md`)
 
 ## Tech Stack
 
@@ -78,6 +79,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 # NextAuth Configuration
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_nextauth_secret_here
+
+# Nostr Publishing (planned - see NOSTR_PLAN.md)
+NOSTR_RELAYS=wss://relay1.example.com,wss://relay2.example.com
+NOSTR_PRIVATE_KEY=nsec1yourfixedaccountkey
+REDIS_URL=redis://user:pass@host:6379
+# Optional dev fallback when Redis is unavailable
+SQLITE_DB_PATH=.data/ndk-cache.sqlite
 ```
 
 **Required variables:**
@@ -90,6 +98,7 @@ NEXTAUTH_SECRET=your_nextauth_secret_here
 - `ALTCHA_SECRET_KEY` - For captcha verification (required for submissions)
 - `OSM_CLIENT_ID`, `OSM_CLIENT_SECRET`, `OSM_REFRESH_TOKEN` - For OSM API integration (required for OSM uploads)
 - `NEXT_PUBLIC_APP_URL` - Application URL (defaults to http://localhost:3000 if not set)
+- `NOSTR_RELAYS`, `NOSTR_PRIVATE_KEY`, `REDIS_URL`, `SQLITE_DB_PATH` - For the upcoming Nostr publishing pipeline (details in `NOSTR_PLAN.md`)
 
 4. Set up the Supabase database:
    - Follow the instructions in `SUPABASE_SETUP.md`
@@ -144,6 +153,10 @@ See `SUPABASE_SETUP.md` for database setup instructions.
 ## OSM Integration
 
 The portal uses a dedicated OSM import account to create/update nodes. Each business is uploaded as an individual changeset with proper tags and metadata.
+
+## Nostr Integration (Planned)
+
+Refer to `NOSTR_IMPLEMENTATION.md` for the architectural rationale and `NOSTR_PLAN.md` for the step-by-step build plan, configuration requirements, and operational guidelines for the upcoming Nostr publishing workflow.
 
 ## License
 
