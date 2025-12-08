@@ -180,6 +180,7 @@ export async function POST(request: NextRequest) {
     // Check for duplicates
     let duplicateOsmId: number | null = null;
     let duplicateOsmType: string | null = null;
+    let duplicateMatches: any[] | null = null;
 
     if (latitude && longitude) {
       try {
@@ -193,6 +194,9 @@ export async function POST(request: NextRequest) {
         if (duplicateData.isDuplicate) {
           duplicateOsmId = duplicateData.osmId;
           duplicateOsmType = duplicateData.osmType;
+        }
+        if (Array.isArray(duplicateData.matches) && duplicateData.matches.length > 0) {
+          duplicateMatches = duplicateData.matches;
         }
       } catch (error) {
         console.error("Duplicate check failed:", error);
@@ -228,6 +232,7 @@ export async function POST(request: NextRequest) {
         userEmail: email,
         duplicateOsmId: duplicateOsmId ? BigInt(duplicateOsmId) : null,
         duplicateOsmType: duplicateOsmType || null,
+        duplicateMatches: duplicateMatches || null,
       },
     });
 
@@ -257,6 +262,7 @@ export async function POST(request: NextRequest) {
         Notes: notes,
         "Duplicate OSM ID": duplicateOsmId,
         "Duplicate OSM Type": duplicateOsmType,
+        "Duplicate Matches": duplicateMatches,
         "Admin Review Status": submission.status,
         "Submitted At": new Date().toISOString(),
       });

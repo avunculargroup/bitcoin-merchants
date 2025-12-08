@@ -36,6 +36,7 @@ model Submission {
   userEmail     String?  @map("user_email")
   duplicateOsmId BigInt?  @map("duplicate_osm_id")
   duplicateOsmType String? @map("duplicate_osm_type") // "node" or "way"
+  duplicateMatches Json? @map("duplicate_matches")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 

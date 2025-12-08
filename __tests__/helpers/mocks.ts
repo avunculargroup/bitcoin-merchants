@@ -10,6 +10,7 @@ export interface MockSubmission {
   longitude?: number;
   duplicateOsmId?: string | null;
   duplicateOsmType?: string | null;
+  duplicateMatches?: any[] | null;
   userEmail?: string;
   [key: string]: any;
 }
@@ -50,6 +51,7 @@ export function createMockSubmission(overrides: Partial<MockSubmission> = {}): M
     longitude: 144.9631,
     duplicateOsmId: null,
     duplicateOsmType: null,
+    duplicateMatches: null,
     userEmail: 'test@example.com',
     ...overrides,
   };

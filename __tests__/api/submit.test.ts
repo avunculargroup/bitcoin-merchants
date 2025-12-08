@@ -224,6 +224,16 @@ describe('Submission API', () => {
             isDuplicate: true,
             osmId: 12345,
             osmType: 'node',
+            matches: [
+              {
+                osmId: 12345,
+                osmType: 'node',
+                name: 'Test Business',
+                category: 'shop=cafe',
+                tags: { name: 'Test Business' },
+                matchReason: 'similar_name',
+              },
+            ],
           }),
         });
 
@@ -248,6 +258,11 @@ describe('Submission API', () => {
           data: expect.objectContaining({
             duplicateOsmId: BigInt(12345),
             duplicateOsmType: 'node',
+            duplicateMatches: expect.arrayContaining([
+              expect.objectContaining({
+                osmId: 12345,
+              }),
+            ]),
           }),
         })
       );
@@ -290,6 +305,7 @@ describe('Submission API', () => {
           data: expect.objectContaining({
             duplicateOsmId: null,
             duplicateOsmType: null,
+            duplicateMatches: null,
           }),
         })
       );
