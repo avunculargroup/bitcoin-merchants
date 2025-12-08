@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { UseFormSetValue } from "react-hook-form";
+import type { FieldValues, UseFormSetValue } from "react-hook-form";
 import { parseStreetAddress } from "@/lib/form-helpers";
 
 export type BusinessSearchPlace = {
@@ -28,11 +28,11 @@ type AddressFields = {
   longitude?: number | null;
 };
 
-type UseBusinessSearchPrefillOptions<FormValues extends AddressFields> = {
+type UseBusinessSearchPrefillOptions<FormValues extends AddressFields & FieldValues> = {
   setValue: UseFormSetValue<FormValues>;
 };
 
-export function useBusinessSearchPrefill<FormValues extends AddressFields>({
+export function useBusinessSearchPrefill<FormValues extends AddressFields & FieldValues>({
   setValue,
 }: UseBusinessSearchPrefillOptions<FormValues>) {
   const [geocoding, setGeocoding] = useState(false);
