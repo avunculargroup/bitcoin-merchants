@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Header() {
@@ -35,7 +36,10 @@ export default function Header() {
           </nav>
         </div>
         <Button asChild>
-          <Link href="/map">Register business</Link>
+          <Link href="/map" className="inline-flex items-center gap-2">
+            <MapPin className="h-4 w-4" aria-hidden="true" />
+            Get on the map
+          </Link>
         </Button>
       </div>
     </header>
