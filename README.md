@@ -11,7 +11,7 @@ A privately managed self-service onboarding portal that allows Australian busine
 - Admin dashboard for moderation
 - Privacy-first ALTCHA integration
 - Responsive design with Tailwind CSS and ShadUI
-- Planned Nostr syndication via NDK (see `NOSTR_PLAN.md`)
+- Backend-only Nostr syndication pipeline (NDK + BullMQ)
 
 ## Tech Stack
 
@@ -80,11 +80,14 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_nextauth_secret_here
 
-# Nostr Publishing (planned - see NOSTR_PLAN.md)
+# Redis / BullMQ
+REDIS_URL=redis://user:pass@host:6379
+
+# Nostr Publishing
+NOSTR_PUBLISH_ENABLED=false
 NOSTR_RELAYS=wss://relay1.example.com,wss://relay2.example.com
 NOSTR_PRIVATE_KEY=nsec1yourfixedaccountkey
-REDIS_URL=redis://user:pass@host:6379
-# Optional dev fallback when Redis is unavailable
+# Optional cache fallback when Redis is unavailable locally
 SQLITE_DB_PATH=.data/ndk-cache.sqlite
 ```
 
@@ -98,7 +101,7 @@ SQLITE_DB_PATH=.data/ndk-cache.sqlite
 - `ALTCHA_SECRET_KEY` - For captcha verification (required for submissions)
 - `OSM_CLIENT_ID`, `OSM_CLIENT_SECRET`, `OSM_REFRESH_TOKEN` - For OSM API integration (required for OSM uploads)
 - `NEXT_PUBLIC_APP_URL` - Application URL (defaults to http://localhost:3000 if not set)
-- `NOSTR_RELAYS`, `NOSTR_PRIVATE_KEY`, `REDIS_URL`, `SQLITE_DB_PATH` - For the upcoming Nostr publishing pipeline (details in `NOSTR_PLAN.md`)
+- `NOSTR_PUBLISH_ENABLED`, `NOSTR_RELAYS`, `NOSTR_PRIVATE_KEY`, `REDIS_URL`, `SQLITE_DB_PATH` - Power the Nostr publishing pipeline (details in `NOSTR_PLAN.md`)
 
 4. Set up the Supabase database:
    - Follow the instructions in `SUPABASE_SETUP.md`
@@ -114,6 +117,16 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Running the Nostr worker
+
+The publishing pipeline runs in a separate worker so that API routes stay responsive. After configuring the required environment variables, start the worker locally with:
+
+```bash
+npm run nostr:worker
+```
+
+The worker reads from the `nostr.publish` BullMQ queue, publishes approved submissions via NDK, and records structured logs/metrics in the `admin_publish_logs` table. A heartbeat key (`nostr:worker:heartbeat`) is written to Redis so you can monitor worker health.
 
 ## Project Structure
 
@@ -154,9 +167,15 @@ See `SUPABASE_SETUP.md` for database setup instructions.
 
 The portal uses a dedicated OSM import account to create/update nodes. Each business is uploaded as an individual changeset with proper tags and metadata.
 
-## Nostr Integration (Planned)
+## Nostr Integration
 
-Refer to `NOSTR_IMPLEMENTATION.md` for the architectural rationale and `NOSTR_PLAN.md` for the step-by-step build plan, configuration requirements, and operational guidelines for the upcoming Nostr publishing workflow.
+Refer to `NOSTR_IMPLEMENTATION.md` for the architectural rationale and `NOSTR_PLAN.md` for the build plan. Key implementation pieces now live in:
+
+- `lib/ndk.ts` — singleton NDK client with Redis/SQLite cache adapters
+- `lib/nostr/event-builder.ts` — deterministic content + tag builder fed from `app/content/NOSTR_TEMPLATE.md`
+- `lib/queues/nostrQueue.ts` & `scripts/nostr-worker.ts` — BullMQ queue, worker, and Redis heartbeat
+- `services/nostrPublisher.ts` — end-to-end publish flow with logging + retry metadata
+- Prisma models (`AdminPublishLog`, `NostrDeadLetter`) powering the admin UI status panel `/app/admin/submissions/[id]`
 
 ## License
 

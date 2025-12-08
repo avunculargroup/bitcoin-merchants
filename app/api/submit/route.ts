@@ -3,6 +3,8 @@ import Mailjet from "node-mailjet";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { env } from "@/lib/env";
+import { enqueueNostrPublishJob } from "@/lib/queues/nostrQueue";
+import { logger } from "@/lib/logger";
 
 const websiteDomainPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/i;
 const INFO_EMAIL = "info@bitcoinmerchants.com.au";
@@ -230,6 +232,15 @@ export async function POST(request: NextRequest) {
         duplicateOsmType: duplicateOsmType || null,
       },
     });
+
+    try {
+      await enqueueNostrPublishJob(submission.id, "submission");
+    } catch (jobError) {
+      logger.error("Failed to enqueue Nostr publish job", {
+        submissionId: submission.id,
+        jobError,
+      });
+    }
 
     try {
       await sendSubmissionNotification({
