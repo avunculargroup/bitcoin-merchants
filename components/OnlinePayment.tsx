@@ -42,7 +42,7 @@ export default function OnlinePayment() {
         <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
           <iframe
             className="absolute top-0 left-0 w-full h-full rounded-lg shadow-xl"
-            src="https://www.youtube.com/embed/-GJr4XjRCPo?si=gEQ_QTfasnMrzMX8"
+            src="https://www.youtube-nocookie.com/embed/-GJr4XjRCPo?si=gEQ_QTfasnMrzMX8"
             title="YouTube video player"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
