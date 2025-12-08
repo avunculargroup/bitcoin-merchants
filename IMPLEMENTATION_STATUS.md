@@ -70,6 +70,7 @@
 - ✅ Accessible forms with keyboard navigation
 - ✅ Error handling with user-friendly messages
 - ✅ Typeform-style wizard behind `NEXT_PUBLIC_TYPEFORM_WIZARD_ENABLED` (legacy form still available as fallback)
+- ✅ Backend Nostr publishing pipeline (NDK client, BullMQ worker, admin status panel)
 
 ## 🔧 Configuration Required
 

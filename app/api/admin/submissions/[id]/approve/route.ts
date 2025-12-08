@@ -3,6 +3,8 @@ import Mailjet from "node-mailjet";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
+import { enqueueNostrPublishJob } from "@/lib/queues/nostrQueue";
+import { logger } from "@/lib/logger";
 import { openChangeset, createNode, updateNode, updateWay, closeChangeset, fetchNode, fetchWay } from "@/lib/osm";
 
 const INFO_EMAIL = "info@bitcoinmerchants.com.au";
@@ -490,6 +492,15 @@ export async function POST(
         });
     } catch (emailError) {
         console.error("Failed to send notification email:", emailError);
+    }
+
+    try {
+      await enqueueNostrPublishJob(id, "approval");
+    } catch (jobError) {
+      logger.error("Failed to enqueue approval publish job", {
+        submissionId: id,
+        jobError,
+      });
     }
 
     return NextResponse.json({ success: true, osmNodeUrl });

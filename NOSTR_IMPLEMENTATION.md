@@ -213,6 +213,19 @@ Given you’re using Next.js (server-side capable) and need a clean integration 
 
 ---
 
+## 🔄 Current Implementation Snapshot (2025-12-08)
+
+- **Environment & config**: `lib/env.ts` now validates Nostr variables (relays, private key, Redis URL, publish flag) via Zod and fails fast when misconfigured. `.env.example` documents the required keys.
+- **Prisma schema**: `AdminPublishLog` + `NostrDeadLetter` tables capture publish attempts, relay outcomes, retries, and DLQ records. Migration lives at `prisma/migrations/202512080001_nostr_publish_pipeline`.
+- **NDK client**: `lib/ndk.ts` exports a singleton with Redis cache (or SQLite fallback) plus signer and connection health guard `assertNostrReady()`.
+- **Event builder**: `lib/nostr/event-builder.ts` renders content from `app/content/NOSTR_TEMPLATE.md`, sanitizes user data, enforces size limits, and emits deterministic tags (submissionId, geo, region, trigger, payment metadata).
+- **Publisher service**: `services/nostrPublisher.ts` orchestrates fetch → build → sign → publish, writes structured logs, updates relay statuses, and classifies retry vs fail.
+- **Queue & worker**: `lib/queues/nostrQueue.ts` wraps BullMQ (`nostr.publish` queue, heartbeat, DLQ) and exposes `enqueueNostrPublishJob` + `startNostrWorker`. `scripts/nostr-worker.ts` boots the worker via `npm run nostr:worker`.
+- **API touchpoints**: `/api/submit` + `/api/admin/submissions/[id]/approve` enqueue jobs after persistence, while `/api/admin/submissions/[id]/status` surfaces log history for the admin UI.
+- **Admin UI**: `app/admin/submissions/[id]/page.tsx` now shows live publish state, relay chips, and error context so moderators know when syndication succeeds or needs intervention.
+
+---
+
 If you like — I can also attach a **sample skeleton structure** for your Next.js project directory (folders/modules + which files handle what: e.g. `ndk.ts`, `publishService.ts`, `retryWorker.ts`, `routes/api/submit.ts`, etc.) so that you have a ready-to-drop-in scaffold.
 
 [1]: https://github.com/nostr-dev-kit/ndk?utm_source=chatgpt.com "nostr-dev-kit/ndk: Nostr Development Kit with outbox-model support - GitHub"

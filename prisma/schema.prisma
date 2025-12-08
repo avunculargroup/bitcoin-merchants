@@ -11,49 +11,51 @@ datasource db {
 }
 
 model Submission {
-  id            String   @id @default(uuid())
-  status        String   @default("pending") // pending, duplicate, uploaded, rejected
-  businessName  String   @map("business_name")
-  description   String?
-  category      String?
-  street        String?
-  housenumber   String?
-  suburb        String?
-  postcode      String?
-  state         String?
-  city          String?
-  latitude      Float?
-  longitude     Float?
-  phone         String?
-  website       String?
-  email         String?
-  facebook      String?
-  instagram     String?
-  bitcoinDetails Json?   @map("bitcoin_details") // { onChain: boolean, lightning: boolean, lightningContactless: boolean, lightningOperator: string, other: string[], inStore: boolean, online: boolean }
-  openingHours  String?  @map("opening_hours")
-  wheelchair    String?
-  notes         String?
-  userEmail     String?  @map("user_email")
-  duplicateOsmId BigInt?  @map("duplicate_osm_id")
-  duplicateOsmType String? @map("duplicate_osm_type") // "node" or "way"
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid())
+  status           String   @default("pending") // pending, duplicate, uploaded, rejected
+  businessName     String   @map("business_name")
+  description      String?
+  category         String?
+  street           String?
+  housenumber      String?
+  suburb           String?
+  postcode         String?
+  state            String?
+  city             String?
+  latitude         Float?
+  longitude        Float?
+  phone            String?
+  website          String?
+  email            String?
+  facebook         String?
+  instagram        String?
+  bitcoinDetails   Json?    @map("bitcoin_details") // { onChain: boolean, lightning: boolean, lightningContactless: boolean, lightningOperator: string, other: string[], inStore: boolean, online: boolean }
+  openingHours     String?  @map("opening_hours")
+  wheelchair       String?
+  notes            String?
+  userEmail        String?  @map("user_email")
+  duplicateOsmId   BigInt?  @map("duplicate_osm_id")
+  duplicateOsmType String?  @map("duplicate_osm_type") // "node" or "way"
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
-  osmNodes      OsmNode[]
+  osmNodes         OsmNode[]
+  publishLogs      AdminPublishLog[]
+  nostrDeadLetters NostrDeadLetter[]
 
   @@map("submissions")
 }
 
 model OsmNode {
-  id           Int      @id @default(autoincrement())
-  osmId        BigInt   @map("osm_id")
-  submissionId String   @map("submission_id")
+  id           Int       @id @default(autoincrement())
+  osmId        BigInt    @map("osm_id")
+  submissionId String    @map("submission_id")
   version      Int?
-  changesetId  BigInt?  @map("changeset_id")
+  changesetId  BigInt?   @map("changeset_id")
   uploadedAt   DateTime? @map("uploaded_at")
-  createdAt    DateTime @default(now()) @map("created_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
 
-  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@map("osm_nodes")
 }
@@ -70,26 +72,26 @@ model AdminUser {
 }
 
 model EmailVerification {
-  id         String   @id @default(uuid())
-  email      String
-  token      String   @unique
-  submissionId String? @map("submission_id")
-  verified   Boolean  @default(false)
-  expiresAt  DateTime @map("expires_at")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  email        String
+  token        String   @unique
+  submissionId String?  @map("submission_id")
+  verified     Boolean  @default(false)
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("email_verifications")
 }
 
 model Testimonial {
-  id          Int      @id @default(autoincrement())
-  quote       String
-  authorName  String   @map("author_name")
-  businessType String? @map("business_type")
-  businessName String? @map("business_name")
-  approved    Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           Int      @id @default(autoincrement())
+  quote        String
+  authorName   String   @map("author_name")
+  businessType String?  @map("business_type")
+  businessName String?  @map("business_name")
+  approved     Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("testimonials")
 }
@@ -105,13 +107,13 @@ model NewsletterSubscription {
 }
 
 model GeocodingCache {
-  id               String   @id @default(uuid())
-  normalizedAddress String  @unique @map("normalized_address")
-  latitude         Float
-  longitude        Float
-  addressData      Json     @map("address_data") // { street, suburb, postcode, state, city }
-  createdAt        DateTime @default(now()) @map("created_at")
-  expiresAt        DateTime @map("expires_at")
+  id                String   @id @default(uuid())
+  normalizedAddress String   @unique @map("normalized_address")
+  latitude          Float
+  longitude         Float
+  addressData       Json     @map("address_data") // { street, suburb, postcode, state, city }
+  createdAt         DateTime @default(now()) @map("created_at")
+  expiresAt         DateTime @map("expires_at")
 
   @@index([normalizedAddress])
   @@index([expiresAt])
@@ -119,9 +121,61 @@ model GeocodingCache {
 }
 
 model GeocodingRateLimit {
-  id             Int      @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   lastRequestTime DateTime @map("last_request_time")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("geocoding_rate_limit")
+}
+
+model AdminPublishLog {
+  id            String         @id @default(uuid())
+  submissionId  String         @map("submission_id")
+  status        PublishStatus  @default(pending)
+  trigger       PublishTrigger @default(submission)
+  nostrEventId  String?        @map("nostr_event_id")
+  relays        String[]
+  relayStatuses Json?          @map("relay_statuses")
+  retryCount    Int            @default(0) @map("retry_count")
+  lastError     String?        @map("last_error")
+  publishedAt   DateTime?      @map("published_at")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@map("admin_publish_logs")
+}
+
+model NostrDeadLetter {
+  id           String    @id @default(uuid())
+  submissionId String?   @map("submission_id")
+  jobId        String    @map("job_id")
+  payload      Json      @map("payload")
+  error        String?   @map("error")
+  retries      Int       @default(0)
+  resolved     Boolean   @default(false)
+  resolvedAt   DateTime? @map("resolved_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  submission Submission? @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+
+  @@index([jobId])
+  @@index([submissionId])
+  @@map("nostr_dead_letter")
+}
+
+enum PublishStatus {
+  pending
+  retrying
+  success
+  failed
+  skipped
+}
+
+enum PublishTrigger {
+  submission
+  approval
+  manual
 }

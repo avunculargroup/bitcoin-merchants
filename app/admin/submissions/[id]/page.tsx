@@ -40,6 +40,32 @@ interface Submission {
   osmNodes: Array<{ osmId: string; changesetId: string | null }>;
 }
 
+type RelayStatus = {
+  relay: string;
+  status: "success" | "failed" | "pending";
+  error?: string;
+  latencyMs?: number;
+};
+
+type PublishLogEntry = {
+  id: string;
+  status: string;
+  trigger: string;
+  nostrEventId?: string | null;
+  relays: string[];
+  relayStatuses: RelayStatus[];
+  retryCount: number;
+  lastError?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string | null;
+};
+
+type PublishStatusResponse = {
+  latestStatus: string | null;
+  logs: PublishLogEntry[];
+};
+
 export default function SubmissionDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -49,14 +75,33 @@ export default function SubmissionDetailPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [duplicateStrategy, setDuplicateStrategy] = useState<"update" | "create">("update");
+  const [publishStatus, setPublishStatus] = useState<PublishStatusResponse | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   const { register, handleSubmit, reset, setValue, watch } = useForm();
 
   useEffect(() => {
     if (params.id) {
       fetchSubmission();
+      refreshPublishStatus();
     }
   }, [params.id]);
+
+  const refreshPublishStatus = async () => {
+    if (!params.id) return;
+    setStatusLoading(true);
+    try {
+      const response = await fetch(`/api/admin/submissions/${params.id}/status`);
+      if (response.ok) {
+        const data = await response.json();
+        setPublishStatus(data);
+      }
+    } catch (error) {
+      console.error("Error fetching publish status:", error);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
   const fetchSubmission = async () => {
     try {
@@ -201,6 +246,79 @@ export default function SubmissionDetailPage() {
                 Approve & Publish to OSM
               </Button>
             </>
+          )}
+        </div>
+      </div>
+
+      <div className="mb-8 border rounded-lg p-4 bg-white shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-neutral-500">Nostr publish status</p>
+            <p className="text-xl font-semibold mt-1">
+              {publishStatus?.latestStatus
+                ? publishStatus.latestStatus.toUpperCase()
+                : "NOT QUEUED"}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshPublishStatus}
+            disabled={statusLoading}
+          >
+            {statusLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Refresh"
+            )}
+          </Button>
+        </div>
+
+        <div className="mt-4 space-y-3 max-h-80 overflow-y-auto">
+          {publishStatus?.logs.length ? (
+            publishStatus.logs.map((log) => (
+              <div key={log.id} className="rounded-md border p-3">
+                <div className="flex flex-wrap justify-between text-sm">
+                  <span className="font-semibold">{log.status.toUpperCase()}</span>
+                  <span className="text-neutral-500">
+                    {new Date(log.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-600 mt-1">
+                  Trigger: {log.trigger}
+                </p>
+                {log.nostrEventId && (
+                  <p className="text-xs text-neutral-600 mt-1">
+                    Event ID: <span className="font-mono">{log.nostrEventId}</span>
+                  </p>
+                )}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {log.relayStatuses.map((relay) => (
+                    <span
+                      key={`${log.id}-${relay.relay}`}
+                      className={`text-xs rounded-full px-2 py-1 ${
+                        relay.status === "success"
+                          ? "bg-green-100 text-green-800"
+                          : relay.status === "failed"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {relay.relay.replace(/^wss?:\/\//, "")}
+                    </span>
+                  ))}
+                </div>
+                {log.lastError && (
+                  <p className="text-xs text-red-600 mt-2">
+                    Last error: {log.lastError}
+                  </p>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-neutral-500">
+              No Nostr publish attempts recorded yet.
+            </p>
           )}
         </div>
       </div>
