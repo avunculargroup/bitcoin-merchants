@@ -39,35 +39,35 @@ export function useBusinessSearchPrefill<FormValues extends AddressFields & Fiel
   const [geocodingAttribution, setGeocodingAttribution] = useState<string | null>(null);
 
   const setFieldValue = useCallback(
-    <K extends Path<FormValues>>(field: K, value: PathValue<FormValues, K>) => {
-      setValue(field, value);
+    (field: keyof AddressFields, value: AddressFields[typeof field]) => {
+      setValue(field as Path<FormValues>, value as PathValue<FormValues, Path<FormValues>>);
     },
     [setValue]
   );
 
   const handlePlaceSelect = useCallback(
     async (place: BusinessSearchPlace) => {
-      setFieldValue("businessName", place.name as PathValue<FormValues, "businessName">);
+      setFieldValue("businessName", place.name);
 
       if (place.addressComponents) {
         if (place.addressComponents.street?.trim()) {
           const parsed = parseStreetAddress(place.addressComponents.street.trim());
           if (parsed.houseNumber) {
-            setFieldValue("housenumber", parsed.houseNumber as PathValue<FormValues, "housenumber">);
+            setFieldValue("housenumber", parsed.houseNumber);
           }
-          setFieldValue("street", parsed.street as PathValue<FormValues, "street">);
+          setFieldValue("street", parsed.street);
         }
         if (place.addressComponents.suburb) {
-          setFieldValue("suburb", place.addressComponents.suburb as PathValue<FormValues, "suburb">);
+          setFieldValue("suburb", place.addressComponents.suburb);
         }
         if (place.addressComponents.city) {
-          setFieldValue("city", place.addressComponents.city as PathValue<FormValues, "city">);
+          setFieldValue("city", place.addressComponents.city);
         }
         if (place.addressComponents.state) {
-          setFieldValue("state", place.addressComponents.state as PathValue<FormValues, "state">);
+          setFieldValue("state", place.addressComponents.state);
         }
         if (place.addressComponents.postcode) {
-          setFieldValue("postcode", place.addressComponents.postcode as PathValue<FormValues, "postcode">);
+          setFieldValue("postcode", place.addressComponents.postcode);
         }
       }
 
@@ -83,8 +83,8 @@ export function useBusinessSearchPrefill<FormValues extends AddressFields & Fiel
 
         if (response.ok) {
           const data = await response.json();
-          const latitude = (typeof data.latitude === "number" ? data.latitude : undefined) as PathValue<FormValues, "latitude">;
-          const longitude = (typeof data.longitude === "number" ? data.longitude : undefined) as PathValue<FormValues, "longitude">;
+          const latitude = typeof data.latitude === "number" ? data.latitude : undefined;
+          const longitude = typeof data.longitude === "number" ? data.longitude : undefined;
           setFieldValue("latitude", latitude);
           setFieldValue("longitude", longitude);
 
@@ -96,21 +96,21 @@ export function useBusinessSearchPrefill<FormValues extends AddressFields & Fiel
             if (!place.addressComponents?.street && data.address.street) {
               const parsed = parseStreetAddress(data.address.street);
               if (parsed.houseNumber) {
-                setFieldValue("housenumber", parsed.houseNumber as PathValue<FormValues, "housenumber">);
+                setFieldValue("housenumber", parsed.houseNumber);
               }
-              setFieldValue("street", parsed.street as PathValue<FormValues, "street">);
+              setFieldValue("street", parsed.street);
             }
             if (!place.addressComponents?.suburb && data.address.suburb) {
-              setFieldValue("suburb", data.address.suburb as PathValue<FormValues, "suburb">);
+              setFieldValue("suburb", data.address.suburb);
             }
             if (!place.addressComponents?.postcode && data.address.postcode) {
-              setFieldValue("postcode", data.address.postcode as PathValue<FormValues, "postcode">);
+              setFieldValue("postcode", data.address.postcode);
             }
             if (!place.addressComponents?.state && data.address.state) {
-              setFieldValue("state", data.address.state as PathValue<FormValues, "state">);
+              setFieldValue("state", data.address.state);
             }
             if (!place.addressComponents?.city && data.address.city) {
-              setFieldValue("city", data.address.city as PathValue<FormValues, "city">);
+              setFieldValue("city", data.address.city);
             }
           }
         }
