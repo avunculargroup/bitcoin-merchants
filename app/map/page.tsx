@@ -101,7 +101,7 @@ export default function MapPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       <Hero />
-      <section className="mx-auto mt-16 w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+      <section className="mx-auto mt-16 mb-16 w-full max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-lg backdrop-blur">
           <h2 className="text-3xl font-semibold text-slate-900">The BTC Map</h2>
           <p className="mt-4 text-lg text-slate-600">
