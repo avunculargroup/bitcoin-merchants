@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
+import type { BusinessSearchPlace } from "@/hooks/useBusinessSearchPrefill";
 
 // Type alias for PlacesLibrary to avoid namespace resolution issues
 type PlaceInstance = {
@@ -36,17 +37,7 @@ interface PlacePrediction {
 }
 
 interface BusinessSearchProps {
-  onPlaceSelect: (place: { 
-    name: string; 
-    address: string; 
-    addressComponents?: {
-      street: string;
-      suburb: string;
-      city: string;
-      state: string;
-      postcode: string;
-    };
-  }) => void;
+  onPlaceSelect: (place: BusinessSearchPlace) => void;
 }
 
 export default function BusinessSearch({ onPlaceSelect }: BusinessSearchProps) {

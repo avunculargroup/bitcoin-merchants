@@ -82,6 +82,8 @@ function getDatabaseUrl(): string {
   return '';
 }
 
+const parseBoolean = (value?: string | null) => (value ?? "").toLowerCase() === "true";
+
 export const env = {
   googlePlacesApiKey: getEnvVar('NEXT_PUBLIC_GOOGLE_PLACES_API_KEY', false),
   altchaSecretKey: getEnvVar('ALTCHA_SECRET_KEY', false),
@@ -95,5 +97,6 @@ export const env = {
   mailjetApiKey: getEnvVar('MAILJET_API_KEY', false),
   mailjetApiSecret: getEnvVar('MAILJET_API_SECRET', false),
   mailjetFromEmail: getEnvVar('MAILJET_FROM_EMAIL', false) || 'noreply@bitcoinmerchants.com.au',
+  typeformWizardEnabled: parseBoolean(process.env.NEXT_PUBLIC_TYPEFORM_WIZARD_ENABLED),
 };
 
