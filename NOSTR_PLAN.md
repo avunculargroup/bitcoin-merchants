@@ -72,13 +72,18 @@
    - Optional integration with alerting (e.g., Webhook/Slack) when DLQ receives items.
    - Acceptance: log statements verified in dev; alert hook documented.
 
+10. **Developer documentation**
+    - Update `README.md` (and `.env.example` if present) with the new Nostr variables, queue requirements, and operational runbooks.
+    - Reference `NOSTR_IMPLEMENTATION.md`/`NOSTR_PLAN.md` so future contributors know where to find the architecture details.
+    - Acceptance: doc PR reviewed; onboarding instructions mention Nostr setup.
+
 ### Phase 5 — Hardening
-10. **Security review**
+11. **Security review**
     - Ensure private key access limited to server runtime; add secret-rotation checklist.
     - Pen-test input sanitization for event content.
     - Acceptance: security checklist completed, peer-review sign-off.
 
-11. **Load & chaos testing**
+12. **Load & chaos testing**
     - Simulate burst submissions and relay outages (mock NDK to throw) to verify retries and monitoring.
     - Acceptance: documented test results; any discovered issues resolved.
 
