@@ -73,6 +73,12 @@ A minimal relational schema might include tables:
 | **osm_nodes** | id (serial), osm_id (bigint), submission_id (UUID), version, changeset_id, uploaded_at | Links OSM elements to submissions. |
 | **admin_users** | id (serial), email, password_hash, role | Authorised staff for moderation. |
 
+### 3.5 Feature Flag: Typeform Wizard
+
+- A Typeform-style multi-step wizard replaces the legacy all-in-one form when `NEXT_PUBLIC_TYPEFORM_WIZARD_ENABLED=true`.
+- The submit page renders `components/forms/TypeformLikeForm` behind the flag and falls back to the existing legacy experience via `LegacySubmitForm` otherwise.
+- Both implementations post to `/api/submit` with identical payloads to preserve backend compatibility and enable phased rollout/rollback.
+
 Additional tables (e.g., audit logs, email verifications, rate limits) can be added as needed.
 
 ## 4 User Experience Flow
