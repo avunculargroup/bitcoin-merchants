@@ -16,7 +16,7 @@ const homepageContent = {
       },
       {
         title: "Virtually no fees",
-        body: "Pay mere pennies per transaction with Lightning. Keep more of your sale price without high card fees.",
+        body: "Pay mere cents per transaction with Lightning. Keep more of your sale price without high card fees.",
       },
       {
         title: "Protect your margin",
