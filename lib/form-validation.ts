@@ -88,7 +88,8 @@ export const formSchema = z
     }
   });
 
-export type FormValues = z.infer<typeof formSchema>;
+export type FormValues = z.input<typeof formSchema>;
+export type FormOutputValues = z.output<typeof formSchema>;
 
 export const defaultValues: FormValues = {
   businessName: "",
