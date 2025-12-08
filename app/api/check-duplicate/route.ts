@@ -1,19 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 
+type OsmElementType = "node" | "way";
+
+interface OverpassElement {
+  type: OsmElementType;
+  id: number;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
+}
+
 interface OverpassResponse {
-  elements: Array<{
-    type: string;
-    id: number;
-    lat?: number;
-    lon?: number;
-    center?: { lat: number; lon: number };
-    tags?: {
-      name?: string;
-      "currency:XBT"?: string;
-      "payment:bitcoin"?: string;
-      "bitcoin:accepts"?: string;
-    };
-  }>;
+  elements: OverpassElement[];
+}
+
+interface DuplicateMatch {
+  osmId: number;
+  osmType: OsmElementType;
+  name?: string;
+  category?: string;
+  tags: Record<string, string>;
+  matchReason: "bitcoin_tagged" | "similar_name";
+  coordinates?: { lat: number; lon: number };
+  changesetId?: number;
+  lastUpdated?: string;
 }
 
 /**
@@ -61,6 +72,77 @@ function buildNameRegex(keywords: string[]): string {
   const escaped = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   // Match if any keyword appears in the name (case-insensitive)
   return `~"${escaped.join('|')}",i`;
+}
+
+const CATEGORY_TAGS = ["amenity", "shop", "tourism", "leisure", "craft", "office", "man_made"];
+const BITCOIN_TAGS = ["currency:XBT", "payment:bitcoin", "bitcoin:accepts"];
+
+function determineMatchReason(tags: Record<string, string>): "bitcoin_tagged" | "similar_name" {
+  const hasBitcoinTag = BITCOIN_TAGS.some((key) => {
+    if (key === "bitcoin:accepts") {
+      return tags[key] === "yes";
+    }
+    return Boolean(tags[key]);
+  });
+  return hasBitcoinTag ? "bitcoin_tagged" : "similar_name";
+}
+
+function determineCategory(tags: Record<string, string>): string | undefined {
+  for (const key of CATEGORY_TAGS) {
+    if (tags[key]) {
+      return `${key}=${tags[key]}`;
+    }
+  }
+  return undefined;
+}
+
+async function fetchChangesetMetadata(element: OverpassElement) {
+  const elementType = element.type === "way" ? "way" : "node";
+
+  try {
+    const elementResponse = await fetch(
+      `https://api.openstreetmap.org/api/0.6/${elementType}/${element.id}`,
+      {
+        headers: {
+          "User-Agent": "Aussie-Bitcoin-Merchants/1.0",
+        },
+      }
+    );
+
+    if (!elementResponse.ok) {
+      return { changesetId: undefined, timestamp: null };
+    }
+
+    const elementXml = await elementResponse.text();
+    const changesetMatch = elementXml.match(/changeset="(\d+)"/);
+    if (!changesetMatch) {
+      return { changesetId: undefined, timestamp: null };
+    }
+
+    const changesetId = parseInt(changesetMatch[1], 10);
+
+    const changesetResponse = await fetch(
+      `https://api.openstreetmap.org/api/0.6/changeset/${changesetId}`,
+      {
+        headers: {
+          "User-Agent": "Aussie-Bitcoin-Merchants/1.0",
+        },
+      }
+    );
+
+    if (!changesetResponse.ok) {
+      return { changesetId, timestamp: null };
+    }
+
+    const changesetXml = await changesetResponse.text();
+    const timestampMatch = changesetXml.match(/created_at="([^"]+)"/);
+    const timestamp = timestampMatch ? new Date(timestampMatch[1]) : null;
+
+    return { changesetId, timestamp };
+  } catch (error) {
+    console.warn(`Failed to fetch changeset info for ${element.type} ${element.id}:`, error);
+    return { changesetId: undefined, timestamp: null };
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -125,91 +207,62 @@ export async function POST(request: NextRequest) {
     const data: OverpassResponse = await response.json();
 
     if (data.elements && data.elements.length > 0) {
-      // If multiple duplicates, select the one with the most recent changeset
-      // Fetch changeset info for each element to compare timestamps
-      let bestMatch = data.elements[0];
-      let mostRecentTimestamp: Date | null = null;
+      const matchResults = await Promise.all(
+        data.elements.map(async (element) => {
+          const tags = element.tags || {};
+          const coordinates = element.center ||
+            (element.lat !== undefined && element.lon !== undefined
+              ? { lat: element.lat, lon: element.lon }
+              : undefined);
+          const { changesetId, timestamp } = await fetchChangesetMetadata(element);
 
-      // Fetch changeset information for each duplicate
-      const changesetPromises = data.elements.map(async (element) => {
-        try {
-          // First, fetch the element to get its changeset ID
-          const elementType = element.type === 'way' ? 'way' : 'node';
-          const elementResponse = await fetch(
-            `https://api.openstreetmap.org/api/0.6/${elementType}/${element.id}`,
-            {
-              headers: {
-                'User-Agent': 'Aussie-Bitcoin-Merchants/1.0',
-              },
-            }
-          );
+          const match: DuplicateMatch = {
+            osmId: element.id,
+            osmType: element.type,
+            name: tags.name,
+            category: determineCategory(tags),
+            tags,
+            matchReason: determineMatchReason(tags),
+            coordinates,
+            changesetId,
+            lastUpdated: timestamp ? timestamp.toISOString() : undefined,
+          };
 
-          if (!elementResponse.ok) {
-            return null;
-          }
+          return { match, element, timestamp };
+        })
+      );
 
-          const elementXml = await elementResponse.text();
-          const changesetMatch = elementXml.match(/changeset="(\d+)"/);
-          if (!changesetMatch) {
-            return null;
-          }
+      if (matchResults.length === 0) {
+        return NextResponse.json({ isDuplicate: false });
+      }
 
-          const changesetId = changesetMatch[1];
-
-          // Fetch changeset details to get timestamp
-          const changesetResponse = await fetch(
-            `https://api.openstreetmap.org/api/0.6/changeset/${changesetId}`,
-            {
-              headers: {
-                'User-Agent': 'Aussie-Bitcoin-Merchants/1.0',
-              },
-            }
-          );
-
-          if (!changesetResponse.ok) {
-            return null;
-          }
-
-          const changesetXml = await changesetResponse.text();
-          const timestampMatch = changesetXml.match(/created_at="([^"]+)"/);
-          if (!timestampMatch) {
-            return null;
-          }
-
-          const timestamp = new Date(timestampMatch[1]);
-          return { element, timestamp, changesetId: parseInt(changesetId, 10) };
-        } catch (error) {
-          console.warn(`Failed to fetch changeset info for ${element.type} ${element.id}:`, error);
-          return null;
-        }
-      });
-
-      const changesetResults = await Promise.all(changesetPromises);
-      const validResults = changesetResults.filter((r): r is { element: typeof data.elements[0]; timestamp: Date; changesetId: number } => r !== null);
-
-      if (validResults.length > 0) {
-        // Find the element with the most recent changeset
-        for (const result of validResults) {
-          if (!mostRecentTimestamp || result.timestamp > mostRecentTimestamp) {
-            mostRecentTimestamp = result.timestamp;
-            bestMatch = result.element;
-          }
+      let primaryResult = matchResults[0];
+      for (const result of matchResults) {
+        if (result.timestamp && (!primaryResult.timestamp || result.timestamp > primaryResult.timestamp)) {
+          primaryResult = result;
         }
       }
 
-      // Get coordinates (for ways, use center; for nodes, use lat/lon)
-      const coords = bestMatch.center || 
-        (bestMatch.lat && bestMatch.lon ? { lat: bestMatch.lat, lon: bestMatch.lon } : null);
+      const sortedMatches = matchResults
+        .slice()
+        .sort((a, b) => {
+          if (a.timestamp && b.timestamp) {
+            return b.timestamp.getTime() - a.timestamp.getTime();
+          }
+          if (a.timestamp) return -1;
+          if (b.timestamp) return 1;
+          return 0;
+        })
+        .map((result) => result.match);
 
       return NextResponse.json({
         isDuplicate: true,
-        osmId: bestMatch.id,
-        osmType: bestMatch.type,
-        existingElement: bestMatch,
-        matchReason: bestMatch.tags?.['currency:XBT'] || bestMatch.tags?.['payment:bitcoin'] 
-          ? 'bitcoin_tagged' 
-          : 'similar_name',
-        coordinates: coords,
+        osmId: primaryResult.match.osmId,
+        osmType: primaryResult.match.osmType,
+        existingElement: primaryResult.element,
+        matchReason: primaryResult.match.matchReason,
+        coordinates: primaryResult.match.coordinates,
+        matches: sortedMatches,
       });
     }
 

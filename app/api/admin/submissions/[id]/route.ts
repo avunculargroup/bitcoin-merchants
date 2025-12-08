@@ -33,6 +33,7 @@ export async function GET(
       ...submission,
       duplicateOsmId: (submission as any).duplicateOsmId?.toString(),
       duplicateOsmType: (submission as any).duplicateOsmType,
+      duplicateMatches: submission.duplicateMatches ?? null,
       osmNodes: submission.osmNodes.map((node) => ({
         ...node,
         osmId: node.osmId.toString(),

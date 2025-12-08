@@ -127,6 +127,14 @@ describe('Duplicate Detection API', () => {
       expect(data.osmId).toBe(12345);
       expect(data.osmType).toBe('node');
       expect(data.matchReason).toBe('bitcoin_tagged');
+      expect(Array.isArray(data.matches)).toBe(true);
+      expect(data.matches.length).toBe(1);
+      expect(data.matches[0]).toMatchObject({
+        osmId: 12345,
+        osmType: 'node',
+        matchReason: 'bitcoin_tagged',
+        name: 'Test Business',
+      });
     });
 
     it('should detect duplicate with similar name', async () => {
@@ -181,6 +189,10 @@ describe('Duplicate Detection API', () => {
       expect(response.status).toBe(200);
       expect(data.isDuplicate).toBe(true);
       expect(data.matchReason).toBe('similar_name');
+      expect(data.matches[0]).toMatchObject({
+        osmId: 12345,
+        matchReason: 'similar_name',
+      });
     });
 
     it('should return no duplicate when none found', async () => {
@@ -299,6 +311,9 @@ describe('Duplicate Detection API', () => {
       expect(response.status).toBe(200);
       expect(data.isDuplicate).toBe(true);
       expect(data.osmId).toBe(22222); // Should select the more recent one
+      expect(data.matches).toHaveLength(2);
+      expect(data.matches[0].osmId).toBe(22222);
+      expect(data.matches[1].osmId).toBe(11111);
     });
   });
 

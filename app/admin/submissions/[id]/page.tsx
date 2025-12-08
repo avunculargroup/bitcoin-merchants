@@ -10,6 +10,18 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, AlertTriangle } from "lucide-react";
 
+interface DuplicateMatch {
+  osmId: number;
+  osmType: "node" | "way";
+  name?: string;
+  category?: string;
+  tags: Record<string, string>;
+  matchReason: "bitcoin_tagged" | "similar_name";
+  coordinates?: { lat: number; lon: number };
+  changesetId?: number;
+  lastUpdated?: string;
+}
+
 interface Submission {
   id: string;
   status: string;
@@ -35,9 +47,77 @@ interface Submission {
   notes: string | null;
   userEmail: string | null;
   duplicateOsmId: string | null;
-  duplicateOsmType: string | null;
+  duplicateOsmType: "node" | "way" | null;
+  duplicateMatches: DuplicateMatch[] | null;
   createdAt: string;
   osmNodes: Array<{ osmId: string; changesetId: string | null }>;
+}
+
+function deriveDefaultDuplicateSelection(
+  data: Submission
+): { osmId: string; osmType: "node" | "way" } | null {
+  if (data.duplicateMatches && data.duplicateMatches.length > 0) {
+    const existingMatch = data.duplicateMatches.find(
+      (match) =>
+        data.duplicateOsmId &&
+        match.osmId.toString() === data.duplicateOsmId &&
+        match.osmType === data.duplicateOsmType
+    );
+    const defaultMatch = existingMatch || data.duplicateMatches[0];
+
+    if (defaultMatch) {
+      return {
+        osmId: defaultMatch.osmId.toString(),
+        osmType: defaultMatch.osmType,
+      };
+    }
+  }
+
+  if (data.duplicateOsmId && data.duplicateOsmType) {
+    return {
+      osmId: data.duplicateOsmId,
+      osmType: data.duplicateOsmType,
+    };
+  }
+
+  return null;
+}
+
+function formatMatchCategory(match: DuplicateMatch): string {
+  if (match.category) {
+    const [key, value] = match.category.split("=");
+    return value ? `${value} (${key})` : match.category;
+  }
+  return match.osmType === "way" ? "Way" : "Node";
+}
+
+function formatMatchReason(reason: DuplicateMatch["matchReason"]): string {
+  return reason === "bitcoin_tagged"
+    ? "Bitcoin payment tags present"
+    : "Similar name near submitted location";
+}
+
+function formatMatchAddress(match: DuplicateMatch): string | null {
+  const street = match.tags?.["addr:street"];
+  const housenumber = match.tags?.["addr:housenumber"];
+  const suburb = match.tags?.["addr:suburb"] || match.tags?.["addr:city"];
+
+  const parts: string[] = [];
+  if (street) {
+    parts.push([housenumber, street].filter(Boolean).join(" ").trim());
+  }
+  if (suburb) {
+    parts.push(suburb);
+  }
+
+  return parts.length > 0 ? parts.join(", ") : null;
+}
+
+function formatLastUpdated(lastUpdated?: string): string {
+  if (!lastUpdated) return "Unknown";
+  const date = new Date(lastUpdated);
+  if (Number.isNaN(date.getTime())) return "Unknown";
+  return date.toLocaleString();
 }
 
 export default function SubmissionDetailPage() {
@@ -49,6 +129,7 @@ export default function SubmissionDetailPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [duplicateStrategy, setDuplicateStrategy] = useState<"update" | "create">("update");
+  const [selectedDuplicate, setSelectedDuplicate] = useState<{ osmId: string; osmType: "node" | "way" } | null>(null);
 
   const { register, handleSubmit, reset, setValue, watch } = useForm();
 
@@ -87,6 +168,9 @@ export default function SubmissionDetailPage() {
           notes: data.notes || "",
           bitcoinDetails: data.bitcoinDetails || {},
         });
+        const defaultSelection = deriveDefaultDuplicateSelection(data);
+        setSelectedDuplicate(defaultSelection);
+        setDuplicateStrategy(defaultSelection ? "update" : "create");
       }
     } catch (error) {
       console.error("Error fetching submission:", error);
@@ -97,6 +181,11 @@ export default function SubmissionDetailPage() {
 
   const handleApprove = async (data: any) => {
     if (!submission) return;
+    const duplicateSelection = duplicateStrategy === "update" ? selectedDuplicate : null;
+    if (duplicateStrategy === "update" && !duplicateSelection) {
+      alert("Please select which existing OSM feature to update.");
+      return;
+    }
     setProcessing(true);
     try {
       const response = await fetch(`/api/admin/submissions/${submission.id}/approve`, {
@@ -110,8 +199,8 @@ export default function SubmissionDetailPage() {
             longitude: parseFloat(data.longitude),
           },
           strategy: duplicateStrategy,
-          duplicateOsmId: submission.duplicateOsmId,
-          duplicateOsmType: submission.duplicateOsmType,
+          duplicateOsmId: duplicateSelection?.osmId ?? null,
+          duplicateOsmType: duplicateSelection?.osmType ?? null,
         }),
       });
 
@@ -175,6 +264,19 @@ export default function SubmissionDetailPage() {
   }
 
   const isPending = submission.status === "pending";
+  const duplicateMatches = submission.duplicateMatches || [];
+  const hasDuplicateMatches = duplicateMatches.length > 0;
+  const selectedDuplicateKey = selectedDuplicate
+    ? `${selectedDuplicate.osmType}-${selectedDuplicate.osmId}`
+    : null;
+  const fallbackDuplicateLink =
+    submission.duplicateOsmId && submission.duplicateOsmType
+      ? {
+          osmId: submission.duplicateOsmId,
+          osmType: submission.duplicateOsmType,
+        }
+      : null;
+  const duplicateLinkTarget = selectedDuplicate || fallbackDuplicateLink;
 
   return (
     <div className="container py-20 max-w-4xl">
@@ -218,41 +320,109 @@ export default function SubmissionDetailPage() {
       </div>
 
       {/* Duplicate Warning */}
-      {submission.duplicateOsmId && isPending && (
+      {isPending && (hasDuplicateMatches || submission.duplicateOsmId) && (
         <div className="mb-8 bg-amber-50 border border-amber-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
             <div className="w-full">
-              <h3 className="font-semibold text-amber-900">Potential Duplicate Found</h3>
-              <p className="text-sm text-amber-800 mb-3">
-                This submission matches an existing OpenStreetMap {submission.duplicateOsmType}: 
-                <a 
-                  href={`https://www.openstreetmap.org/${submission.duplicateOsmType}/${submission.duplicateOsmId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium underline ml-1"
-                >
-                  {submission.duplicateOsmId}
-                </a>
-              </p>
-              
-              <div className="space-y-2">
+              <h3 className="font-semibold text-amber-900">Potential Duplicates Found</h3>
+              {hasDuplicateMatches ? (
+                <>
+                  <p className="text-sm text-amber-800">
+                    We found multiple OpenStreetMap features within 25m of this submission. Select
+                    the correct feature to update or choose to create a new one.
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    {duplicateMatches.map((match) => {
+                      const optionKey = `${match.osmType}-${match.osmId}`;
+                      const isSelected = selectedDuplicateKey === optionKey;
+                      const address = formatMatchAddress(match);
+                      const link = `https://www.openstreetmap.org/${match.osmType}/${match.osmId}`;
+                      return (
+                        <label
+                          key={optionKey}
+                          className={`flex items-start gap-3 rounded-lg border p-3 transition ${
+                            isSelected
+                              ? "border-amber-500 bg-white shadow-sm"
+                              : "border-amber-200 bg-amber-100/40"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="duplicate-match"
+                            className="accent-amber-600 mt-1"
+                            disabled={!isPending}
+                            checked={isSelected}
+                            onChange={() =>
+                              setSelectedDuplicate({
+                                osmId: match.osmId.toString(),
+                                osmType: match.osmType,
+                              })
+                            }
+                          />
+                          <div className="w-full">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="font-semibold text-amber-900">
+                                {match.name || "Unnamed location"}
+                              </p>
+                              <a
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-medium text-amber-900 underline"
+                              >
+                                View on OSM
+                              </a>
+                            </div>
+                            <p className="text-sm text-amber-900">
+                              {formatMatchCategory(match)}
+                            </p>
+                            {address && (
+                              <p className="text-xs text-amber-800">{address}</p>
+                            )}
+                            <p className="text-xs text-amber-700">
+                              {formatMatchReason(match.matchReason)} · Last updated{" "}
+                              {formatLastUpdated(match.lastUpdated)}
+                            </p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-amber-800 mb-3">
+                  This submission matches an existing OpenStreetMap {duplicateLinkTarget?.osmType}:
+                  {duplicateLinkTarget && (
+                    <a
+                      href={`https://www.openstreetmap.org/${duplicateLinkTarget.osmType}/${duplicateLinkTarget.osmId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium underline ml-1"
+                    >
+                      {duplicateLinkTarget.osmId}
+                    </a>
+                  )}
+                </p>
+              )}
+
+              <div className="space-y-2 mt-4">
                 <p className="text-sm font-medium text-amber-900">Action Strategy:</p>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="strategy" 
+                    <input
+                      type="radio"
+                      name="strategy"
                       checked={duplicateStrategy === "update"}
                       onChange={() => setDuplicateStrategy("update")}
                       className="accent-amber-600"
                     />
-                    <span className="text-sm text-amber-900">Update Existing (Recommended)</span>
+                    <span className="text-sm text-amber-900">Update Selected Duplicate</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="strategy" 
+                    <input
+                      type="radio"
+                      name="strategy"
                       checked={duplicateStrategy === "create"}
                       onChange={() => setDuplicateStrategy("create")}
                       className="accent-amber-600"
@@ -260,6 +430,11 @@ export default function SubmissionDetailPage() {
                     <span className="text-sm text-amber-900">Create New Node (Ignore Duplicate)</span>
                   </label>
                 </div>
+                {duplicateStrategy === "update" && !selectedDuplicate && (
+                  <p className="text-xs text-red-700">
+                    Select a duplicate before publishing or choose to create a new node.
+                  </p>
+                )}
               </div>
             </div>
           </div>

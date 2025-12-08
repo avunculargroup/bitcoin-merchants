@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Mailjet from "node-mailjet";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { env } from "@/lib/env";
@@ -15,6 +16,18 @@ type BitcoinDetails = {
   other?: string[];
   inStore?: boolean;
   online?: boolean;
+};
+
+type DuplicateMatch = {
+  osmId: number;
+  osmType: "node" | "way";
+  name?: string;
+  category?: string;
+  tags: Record<string, string>;
+  matchReason: "bitcoin_tagged" | "similar_name";
+  coordinates?: { lat: number; lon: number };
+  changesetId?: number;
+  lastUpdated?: string;
 };
 
 const formatWebsiteForOsm = (value?: string | null) => {
@@ -180,6 +193,7 @@ export async function POST(request: NextRequest) {
     // Check for duplicates
     let duplicateOsmId: number | null = null;
     let duplicateOsmType: string | null = null;
+    let duplicateMatches: DuplicateMatch[] | null = null;
 
     if (latitude && longitude) {
       try {
@@ -193,6 +207,9 @@ export async function POST(request: NextRequest) {
         if (duplicateData.isDuplicate) {
           duplicateOsmId = duplicateData.osmId;
           duplicateOsmType = duplicateData.osmType;
+        }
+        if (Array.isArray(duplicateData.matches) && duplicateData.matches.length > 0) {
+          duplicateMatches = duplicateData.matches;
         }
       } catch (error) {
         console.error("Duplicate check failed:", error);
@@ -228,6 +245,9 @@ export async function POST(request: NextRequest) {
         userEmail: email,
         duplicateOsmId: duplicateOsmId ? BigInt(duplicateOsmId) : null,
         duplicateOsmType: duplicateOsmType || null,
+        duplicateMatches: duplicateMatches
+          ? (duplicateMatches as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
       },
     });
 
@@ -257,6 +277,7 @@ export async function POST(request: NextRequest) {
         Notes: notes,
         "Duplicate OSM ID": duplicateOsmId,
         "Duplicate OSM Type": duplicateOsmType,
+        "Duplicate Matches": duplicateMatches,
         "Admin Review Status": submission.status,
         "Submitted At": new Date().toISOString(),
       });
