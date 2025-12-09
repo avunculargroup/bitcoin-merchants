@@ -60,10 +60,8 @@ export default function AdminDashboard() {
   }
 
   const stats = {
-    total: submissions.length,
     pending: submissions.filter((s) => s.status === "pending").length,
     uploaded: submissions.filter((s) => s.status === "uploaded").length,
-    duplicate: submissions.filter((s) => s.status === "duplicate").length,
     rejected: submissions.filter((s) => s.status === "rejected").length,
   };
 
@@ -79,11 +77,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-neutral-light p-4 rounded-lg">
-          <p className="text-sm text-neutral-dark">Total</p>
-          <p className="text-2xl font-bold">{stats.total}</p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="bg-yellow-50 p-4 rounded-lg">
           <p className="text-sm text-neutral-dark">Pending</p>
           <p className="text-2xl font-bold">{stats.pending}</p>
@@ -93,8 +87,8 @@ export default function AdminDashboard() {
           <p className="text-2xl font-bold">{stats.uploaded}</p>
         </div>
         <div className="bg-red-50 p-4 rounded-lg">
-          <p className="text-sm text-neutral-dark">Duplicates</p>
-          <p className="text-2xl font-bold">{stats.duplicate}</p>
+          <p className="text-sm text-neutral-dark">Rejected</p>
+          <p className="text-2xl font-bold">{stats.rejected}</p>
         </div>
       </div>
 
@@ -108,7 +102,6 @@ export default function AdminDashboard() {
           <option value="all">All</option>
           <option value="pending">Pending</option>
           <option value="uploaded">Uploaded</option>
-          <option value="duplicate">Duplicates</option>
           <option value="rejected">Rejected</option>
         </select>
       </div>
