@@ -279,42 +279,46 @@ export default function SubmissionDetailPage() {
   const duplicateLinkTarget = selectedDuplicate || fallbackDuplicateLink;
 
   return (
-    <div className="container py-20 max-w-4xl">
-      <div className="mb-8 flex justify-between items-center">
-        <Button variant="outline" onClick={() => router.back()}>
+    <div className="container py-12 px-4 sm:px-6 max-w-4xl">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <Button variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">
           Back to Dashboard
         </Button>
-        <div className="flex gap-2">
-          {isPending && (
-            <>
-              <Button 
-                variant="destructive" 
-                onClick={() => setShowRejectDialog(true)}
-                disabled={processing}
-              >
-                Reject
-              </Button>
-              <Button 
-                onClick={handleSubmit(handleApprove)}
-                disabled={processing}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {processing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Approve & Publish to OSM
-              </Button>
-            </>
-          )}
-        </div>
+        {isPending && (
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              variant="destructive"
+              onClick={() => setShowRejectDialog(true)}
+              disabled={processing}
+              className="w-full sm:w-auto"
+            >
+              Reject
+            </Button>
+            <Button
+              onClick={handleSubmit(handleApprove)}
+              disabled={processing}
+              className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+            >
+              {processing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Approve & Publish to OSM
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Review Submission</h1>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-          submission.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-          submission.status === 'uploaded' ? 'bg-green-100 text-green-800' :
-          submission.status === 'rejected' ? 'bg-red-100 text-red-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
+        <h1 className="text-3xl font-bold text-center sm:text-left w-full">Review Submission</h1>
+        <span
+          className={`px-3 py-1 rounded-full text-sm font-medium ${
+            submission.status === "pending"
+              ? "bg-yellow-100 text-yellow-800"
+              : submission.status === "uploaded"
+              ? "bg-green-100 text-green-800"
+              : submission.status === "rejected"
+              ? "bg-red-100 text-red-800"
+              : "bg-gray-100 text-gray-800"
+          }`}
+        >
           {submission.status.toUpperCase()}
         </span>
       </div>
@@ -408,7 +412,7 @@ export default function SubmissionDetailPage() {
 
               <div className="space-y-2 mt-4">
                 <p className="text-sm font-medium text-amber-900">Action Strategy:</p>
-                <div className="flex flex-wrap items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
@@ -462,7 +466,7 @@ export default function SubmissionDetailPage() {
 
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Address</h2>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <Label>House Number</Label>
                 <Input {...register("housenumber")} disabled={!isPending} />
@@ -472,7 +476,7 @@ export default function SubmissionDetailPage() {
                 <Input {...register("street")} disabled={!isPending} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <Label>Suburb</Label>
                 <Input {...register("suburb")} disabled={!isPending} />
@@ -482,7 +486,7 @@ export default function SubmissionDetailPage() {
                 <Input {...register("postcode")} disabled={!isPending} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <Label>City</Label>
                 <Input {...register("city")} disabled={!isPending} />
@@ -492,7 +496,7 @@ export default function SubmissionDetailPage() {
                 <Input {...register("state")} disabled={!isPending} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <Label>Latitude</Label>
                 <Input {...register("latitude")} disabled={!isPending} />
@@ -518,7 +522,7 @@ export default function SubmissionDetailPage() {
               <Label>Email (Public)</Label>
               <Input {...register("email")} disabled={!isPending} />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <Label>Facebook</Label>
                 <Input {...register("facebook")} disabled={!isPending} />
@@ -550,7 +554,7 @@ export default function SubmissionDetailPage() {
         {/* Bitcoin Details */}
         <div className="border-t pt-6">
           <h2 className="text-xl font-semibold mb-4">Bitcoin Acceptance</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="flex items-center space-x-2">
               <Checkbox 
                 checked={watch("bitcoinDetails.onChain")}
@@ -634,7 +638,7 @@ export default function SubmissionDetailPage() {
                 rows={3}
               />
             </div>
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
               <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
                 Cancel
               </Button>
