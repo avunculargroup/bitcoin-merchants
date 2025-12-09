@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     user_email VARCHAR(255),
     duplicate_osm_id BIGINT,
     duplicate_osm_type VARCHAR(50),
+    duplicate_matches JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
